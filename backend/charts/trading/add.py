@@ -20,7 +20,7 @@ def fetch_top_100_coins():
         "X-CMC_PRO_API_KEY": API_KEY,
     }
     params = {
-        "start": "100",
+        "start": "1",
         "limit": "10",
         "convert": "USD",
     }
@@ -36,7 +36,7 @@ coins_dict = fetch_top_100_coins()
 
 def insert_coins_into_db():    
     #trading.saveToDatabase(coins_dict, '4h')
-    fvg.find_fvg_levels_foreach(coins_dict, '4h')
+    #fvg.find_fvg_levels_foreach(coins_dict, '4h')
     fvg_filler.control_all(coins_dict, '4h')
     
     

@@ -55,7 +55,7 @@ const ChartContainer = () => {
   });
 
   const fetchData = async (timeFrame) => {
-    const response = await fetch('http://127.0.0.1:8000/charts/table/PENDLEUSDTon4h');
+    const response = await fetch('http://127.0.0.1:8000/charts/table/DOGEUSDTon4h');
     const data = await response.json();
 
     const formattedCandlestickData = data.table_data.map(item => [
@@ -66,13 +66,19 @@ const ChartContainer = () => {
       item.close,
     ]);
 
-    const formattedBullTotalData = data.table_data.map(item => [
+    const formattedBullTotalData = data.table_data
+    .filter(item => item.Bull_Total > 5)
+    .map(item => [
       item.datetime,
+      item.low,
       item.Bull_Total
     ]);
 
-    const formattedBearishTotalData = data.table_data.map(item => [
+    const formattedBearishTotalData = data.table_data
+    .filter(item => item.Bearish_Total > 5)
+    .map(item => [
       item.datetime,
+      item.high,
       item.Bearish_Total
     ]);
 
@@ -156,6 +162,7 @@ const ChartContainer = () => {
           </label>
         ))}
       </div>
+      
 
       <CandlestickChart chartData={chartData} containerHeight={containerHeight} bullTotalData={bullTotalData} bearishTotalData={bearishTotalData} nadarayaWatsonData={nadarayaWatsonData}/>
 

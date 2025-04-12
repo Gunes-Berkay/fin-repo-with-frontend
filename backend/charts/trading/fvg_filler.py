@@ -2,12 +2,12 @@ import os
 import sqlite3
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(BASE_DIR, "papers.sqlite3")
-conn = sqlite3.connect(db_path)
-cursor = conn.cursor()
 
-def control(symbol, interval):
+
+def control(symbol, interval, db_path):
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
     
     try:
         fvg_df = pd.read_sql_query(f"""
@@ -61,9 +61,12 @@ def control(symbol, interval):
         conn.commit()
 
 def control_all(coins_dict, interval):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(BASE_DIR, "papers.sqlite3")
+    
     for symbol in coins_dict.keys():
         try:
-            control(symbol, interval)
+            control(symbol, interval, db_path)
         except Exception as e:
             print(f"Error in {symbol}: {e}")
         

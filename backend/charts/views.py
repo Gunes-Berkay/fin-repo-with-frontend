@@ -18,7 +18,7 @@ db_path = os.path.join(BASE_DIR, "veri.json")
 
 
 def fetch_table_data(request, table_name, INTERVAL):
-     data = get_table_data(table_name, INTERVAL, limit=500)
+     data = get_table_data(table_name, INTERVAL, limit=3000)
      return JsonResponse({'table_data': data}, json_dumps_params={'ensure_ascii': False})
 
 def get_table_data(table_name, INTERVAL, limit=100):

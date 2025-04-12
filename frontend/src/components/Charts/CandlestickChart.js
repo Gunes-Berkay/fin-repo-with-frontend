@@ -1,10 +1,7 @@
 import React from 'react';
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
-import HighchartsMore from 'highcharts/highcharts-more'; // Use default import
 
-// Initialize highcharts-more
-HighchartsMore(Highcharts);
 
 const CandlestickChart = ({ chartData, containerHeight, bullTotalData, bearishTotalData, nadarayaWatsonData }) => {
   const options = {
@@ -38,69 +35,87 @@ const CandlestickChart = ({ chartData, containerHeight, bullTotalData, bearishTo
       {
         name: 'Bullish Divergence',
         type: 'scatter',
-        data: bullTotalData.map(item => [item[0], item[1] - 5]),
+        data: bullTotalData.map(item => ({
+          x:item[0],
+          y:item[1]*90/100,
+          bullTotal:item[2],
+        })),
         marker: {
           fillColor: 'green',
           radius: 6,
         },
         tooltip: {
-          pointFormat: 'Bullish Divergence: {point.x}',
+          pointFormatter: function() {
+            return `Positive Divergence: ${this.x}<br>Price: ${this.y}<br>Positive Divergence Count: ${this.bullTotal}`;
+          },
         },
       },
       {
         name: 'Bearish Divergence',
         type: 'scatter',
-        data: bearishTotalData.map(item => [item[0], item[1] + 5]),
+        data: bearishTotalData.map(item => ({
+          x: item[0],
+          y: item[1]*110/100,
+          bearishTotal: item[2],
+        })),
         marker: {
           fillColor: 'red',
           radius: 6,
         },
         tooltip: {
-          pointFormat: 'Bearish Divergence: {point.x}',
-        },
+          pointFormatter: function() {
+            return `Bearish Divergence: ${this.x}<br>Price: ${this.y}<br>Negative Divergence Count: ${this.bearishTotal}`;
+          },
+        }
       },
       {
         name: 'Nadaraya-Watson',
         data: nadarayaWatsonData.map(item => [item[0], item[1]]),
         color: '#00c0ff',
-        lineWidth: 2,
+        lineWidth: 1,
         type: 'line',
       },
       {
-        name: 'Upper Near - Upper Far',
-        data: nadarayaWatsonData.map(item => [item[0], item[2], item[3]]),
-        type: 'arearange',
+        name: 'Upper Near',
+        data: nadarayaWatsonData.map(item => [item[0], item[2]]),
+        type: 'line',
+        color: 'rgba(255, 0, 0, 0.6)',
+        lineWidth: 2,
+      },
+      {
+        name: 'Upper Far',
+        data: nadarayaWatsonData.map(item => [item[0], item[3]]),
+        type: 'line',
         color: 'rgba(255, 0, 0, 0.4)',
-        lineWidth: 0,
-        enableMouseTracking: false,
-        fillOpacity: 1,
+        lineWidth: 2,
       },
       {
-        name: 'Upper Far - Upper Top',
-        data: nadarayaWatsonData.map(item => [item[0], item[3], item[4]]),
-        type: 'arearange',
+        name: 'Upper Top',
+        data: nadarayaWatsonData.map(item => [item[0],item[4]]),
+        type: 'line',
         color: 'rgba(255, 0, 0, 0.2)',
-        lineWidth: 0,
-        enableMouseTracking: false,
-        fillOpacity: 1,
+        lineWidth: 2,
       },
       {
-        name: 'Lower Near - Lower Far',
-        data: nadarayaWatsonData.map(item => [item[0], item[5], item[6]]),
-        type: 'arearange',
+        name: 'Lower Near',
+        data: nadarayaWatsonData.map(item => [item[0], item[5]]),
+        type: 'line', 
+        color: 'rgba(0, 255, 0, 0.6)',
+        lineWidth: 2,
+      },
+      {
+        name: 'Lower Far',
+        data: nadarayaWatsonData.map(item => [item[0], item[6]]),
+        type: 'line', 
         color: 'rgba(0, 255, 0, 0.4)',
-        lineWidth: 0,
-        enableMouseTracking: false,
-        fillOpacity: 1,
+        lineWidth: 2,
       },
       {
-        name: 'Lower Far - Lower Top',
-        data: nadarayaWatsonData.map(item => [item[0], item[6], item[7]]),
-        type: 'arearange',
+        name: 'Lower Top',
+        data: nadarayaWatsonData.map(item => [item[0],item[7]]),
+        type: 'line', 
         color: 'rgba(0, 255, 0, 0.2)',
-        lineWidth: 0,
-        enableMouseTracking: false,
-        fillOpacity: 1,
+        lineWidth: 2,
       },
     ],
   };
