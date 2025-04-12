@@ -1,0 +1,11 @@
+# Sanal Ortam
+env/
+# Node Modülleri
+frontend/node_modules/
+# Django ve React Geçici Dosyalar
+*.pyc
+__pycache__/
+db.sqlite3
+# Çıkış Yapıları
+build/
+node_modules

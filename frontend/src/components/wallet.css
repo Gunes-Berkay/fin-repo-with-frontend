@@ -1,0 +1,22 @@
+.portfolios-left-div {
+    position: absolute; /* Sol tarafa sabitlemek için */
+    left: 0; /* Sol kenara yapışmasını sağlar */
+    width: 200px; /* Genişliği 200 piksel olarak ayarlar */
+    height: 100%; /* Tüm yüksekliği kapsaması için (isteğe bağlı) */
+    background-color: #f8f9fa; /* Arka plan rengi, isteğe bağlı */
+    overflow-y: auto; /* İçerik taşarsa kaydırılabilir hale getirir */
+    padding: 10px; 
+    border-right: 1px solid #ddd; 
+  }
+
+  .portfolio-div {
+    position: absolute;
+    left:250px ;
+    width:1700px;
+    background-color: #f8f9fa; /* Arka plan rengi, isteğe bağlı */
+    padding: 10px; 
+    border-right: 1px solid #ddd; 
+
+
+  }
+  
