@@ -17,8 +17,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "veri.json") 
 
 
-def fetch_table_data(request, table_name, INTERVAL):
-     data = get_table_data(table_name, INTERVAL, limit=3000)
+def fetch_table_data(request, table_name, INTERVAL,limit):
+     data = get_table_data(table_name, INTERVAL, limit)
      return JsonResponse({'table_data': data}, json_dumps_params={'ensure_ascii': False})
 
 def get_table_data(table_name, INTERVAL, limit=100):
@@ -28,7 +28,7 @@ def get_table_data(table_name, INTERVAL, limit=100):
 
     try:
         with connections['papers_db'].cursor() as cursor:
-            query = f"SELECT * FROM `{table_name}on{INTERVAL}` LIMIT %s"
+            query = f"SELECT * FROM `{table_name}on{INTERVAL}` ORDER BY datetime DESC LIMIT %s"
             cursor.execute(query, [limit])
             columns = [col[0] for col in cursor.description]
             rows = cursor.fetchall()
@@ -181,7 +181,7 @@ def get_most_gainers_and_losers(request):
     else:
         return json.dumps({"error": "Hiçbir swap tick verisi alınamadı."})
 
-
+def 
 
 
     

@@ -55,7 +55,7 @@ const ChartContainer = () => {
   });
 
   const fetchData = async (timeFrame) => {
-    const response = await fetch('http://127.0.0.1:8000/charts/table/DOGEUSDTon4h');
+    const response = await fetch('http://127.0.0.1:8000/charts/table/DOGEUSDTon4hlmt600/');
     const data = await response.json();
 
     const formattedCandlestickData = data.table_data.map(item => [
@@ -88,7 +88,7 @@ const ChartContainer = () => {
       item.upper_near,
       item.upper_far,
       item.upper_top,
-      item.lwoer_near,
+      item.lower_near,
       item.lower_far,
       item.lower_top
     ]);

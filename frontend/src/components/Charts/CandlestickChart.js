@@ -21,6 +21,8 @@ const CandlestickChart = ({ chartData, containerHeight, bullTotalData, bearishTo
         text: 'Price',
         style: { color: '#fff' },
       },
+      min: Math.min(...chartData.map(item => item[3])) * 1.05,  
+      max: Math.max(...chartData.map(item => item[2])) * 0.95,  
     },
     series: [
       {
