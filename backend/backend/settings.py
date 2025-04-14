@@ -84,23 +84,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',  # Default database
-    },
-    'papers_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'charts' / 'trading' / 'papers.sqlite3',  # Papers database
-    },
-    'user_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'databases' / 'userdb.sqlite3',  # Database for user datas
-    },
-    
+    }
 }
 
-DATABASE_ROUTERS = ['backend.db_router.PapersDBRouter']
 
 
 

@@ -28,5 +28,5 @@ interval_mapping = {
     "1d": 1440
 }
 
-data = tv.get_hist(symbol='BTCUSDT', exchange='BINANCE', interval=Interval.in_4_hour, n_bars=500)
+data = tv.get_hist(symbol='BTCUSDT', exchange='BINANCE', interval=Interval.in_4_hour, n_bars=1)
 print(data)

@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import ChartContainer from './Charts/ChartContainer.tsx';
-import { FaBook, FaEye, FaNewspaper } from 'react-icons/fa'; // FontAwesome ikonları
+import { FaBook, FaEye, FaNewspaper, FaTimes } from 'react-icons/fa'; // FontAwesome ikonları
 
 const MainPage = () => {
+  const [currentType, setCurrentType] = useState('default'); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showPaperNews, setShowPaperNews] = useState(false);
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
 
-  const handleIconClick = (type) => {
-    setIsSidebarOpen(true); // Sidebar'ı her tıklamada aç
+  const handleIconClick = (type) => {   
+    setIsSidebarOpen(true);   
     setShowPaperNews(type === 'paper');
     setShowWatchlist(type === 'watchlist');
     setShowResearch(type === 'research');
@@ -30,7 +31,6 @@ const MainPage = () => {
         <ChartContainer />
       </div>
 
-      {/* Orta Buton Paneli */}
       <div
         style={{
           width: '70px',
@@ -43,6 +43,11 @@ const MainPage = () => {
           gap: '20px',
         }}
       >
+        <button onClick={() => setIsSidebarOpen(false)}         
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px' }}>
+          <FaTimes/>
+        </button>
+
         <button
           onClick={() => handleIconClick('paper')}
           title="Haberler"
@@ -64,6 +69,8 @@ const MainPage = () => {
         >
           <FaBook />
         </button>
+
+        
       </div>
 
       {/* Sağ Sidebar */}
@@ -80,9 +87,34 @@ const MainPage = () => {
           <h3>Sidebar</h3>
           <p>Buraya her şeyi koyabilirsin.</p>
 
-          {/* Örnek olarak hangi bölüm açık onu gösterelim */}
           {showPaperNews && <p>📰 Haberler aktif</p>}
-          {showWatchlist && <p>👁️ İzleme Listesi aktif</p>}
+          {showWatchlist && 
+          <div>
+            <p>👁️ İzleme Listesi aktif</p>
+            <div>
+              <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
+                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
+                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ border: '1px solid #ddd', padding: '3px' }}>Örnek İzleme 1</td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid #ddd', padding: '3px' }}>Örnek İzleme 2</td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>Örnek İzleme 3</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>}
           {showResearch && <p>📚 Araştırmalar aktif</p>}
         </div>
       )}
