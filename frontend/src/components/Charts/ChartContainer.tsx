@@ -35,7 +35,7 @@ const ChartContainer = () => {
     obv: [],
     adx: [],
   });
-  const [timeFrame, setTimeFrame] = useState('normal');
+  const [timeFrame, setTimeFrame] = useState(500);
   const [containerHeight, setContainerHeight] = useState(500);
   const [containerHeightforIndicators, setContainerHeightforIndicators] = useState(300);
   const [bullTotalData, setBullTotalData] = useState([]);
@@ -55,7 +55,7 @@ const ChartContainer = () => {
   });
 
   const fetchData = async (timeFrame) => {
-    const response = await fetch('http://127.0.0.1:8000/charts/table/DOGEUSDTon4hlmt600/');
+    const response = await fetch(`http://127.0.0.1:8000/charts/table/DOGEUSDTon4hlmt${timeFrame}/`);
     const data = await response.json();
 
     const formattedCandlestickData = data.table_data.map(item => [
@@ -119,11 +119,11 @@ const ChartContainer = () => {
   }, [timeFrame]);
 
   const increaseTimeFrame = () => {
-    setTimeFrame('expanded');
+    setTimeFrame(timeFrame+100);
   };
 
   const decreaseTimeFrame = () => {
-    setTimeFrame('normal');
+    setTimeFrame(timeFrame-100);
   };
 
   const increaseHeight = () => {
