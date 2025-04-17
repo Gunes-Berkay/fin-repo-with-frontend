@@ -9,6 +9,8 @@ import os
 import json
 import ccxt
 import pandas as pd
+from .models import FollowList, FollowingPaper
+from django.views.decorators.csrf import csrf_exempt
 
 INTERVALS = ['15m', '1h', '4h', '1d']
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -106,122 +108,65 @@ def get_most_gainers_and_losers(request):
     else:
         return json.dumps({"error": "Hiçbir swap tick verisi alınamadı."})
 
+@csrf_exempt
 def create_follow_list(request):
     follow_list_name = request.POST.get('follow_list_name')
     if not follow_list_name:
         return JsonResponse({'error': 'Follow list name is required'}, status=400)
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    INSERT INTO FOLLOW_LIST(list_name) VALUES (?)
-''', (follow_list_name,))
-    conn.commit()
-    conn.close()
-    return JsonResponse({'message': 'Follow list created successfully'}, status=201)
     
+    FollowList.objects.get_or_create(list_name=follow_list_name)
+    return JsonResponse({'message': 'Follow list created successfully'}, status=201)
+
+@csrf_exempt
 def delete_follow_list(request):
     follow_list_name = request.POST.get('follow_list_name')
     if not follow_list_name:
         return JsonResponse({'error': 'Follow list name is required'}, status=400)
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM FOLLOW_LIST WHERE list_name = ?
-''', (follow_list_name,))
-    conn.commit()
-    conn.close()
+    
+    FollowList.objects.filter(list_name=follow_list_name).delete()
     return JsonResponse({'message': 'Follow list deleted successfully'}, status=200)
 
 def get_follow_lists(request):
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT * FROM FOLLOW_LIST
-''')
-    rows = cursor.fetchall()
-    conn.close()
+    lists = FollowList.objects.all().values('list_name')
+    return JsonResponse(list(lists), safe=False, json_dumps_params={'ensure_ascii': False})
 
-    follow_lists = [{'list_name': row[0]} for row in rows]
-    
-    return JsonResponse(follow_lists, safe=False, json_dumps_params={'ensure_ascii': False})
-
+@csrf_exempt
 def add_paper_to_follow_list(request):
     paper_id = request.POST.get('paper_id')
     follow_list_name = request.POST.get('follow_list_name')
     if not paper_id or not follow_list_name:
         return JsonResponse({'error': 'paper_id and follow list name are required'}, status=400)
     
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    INSERT INTO FOLLOWING_PAPER (list_name, paper_id) VALUES (?, ?)
-''', (follow_list_name, paper_id))
-    conn.commit()
-    conn.close()
+    follow_list, _ = FollowList.objects.get_or_create(list_name=follow_list_name)
+    FollowingPaper.objects.get_or_create(list_name=follow_list, paper_id=paper_id)
     return JsonResponse({'message': 'Coin added to follow list successfully'}, status=201)
 
+@csrf_exempt
 def remove_paper_from_follow_list(request):
     paper_id = request.POST.get('paper_id')
     follow_list_name = request.POST.get('follow_list_name')
     if not paper_id or not follow_list_name:
         return JsonResponse({'error': 'paper_id and follow list name are required'}, status=400)
     
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM FOLLOWING_PAPER WHERE list_name = ? AND paper_id = ?
-''', (follow_list_name, paper_id))
-    conn.commit()
-    conn.close()
+    FollowingPaper.objects.filter(list_name__list_name=follow_list_name, paper_id=paper_id).delete()
     return JsonResponse({'message': 'Coin removed from follow list successfully'}, status=200)
 
 def send_follow_list_on_start(request):
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT COUNT(*) FROM FOLLOW_LIST
-''')
-    count = cursor.fetchone()[0]
-    conn.close()
+    if not FollowList.objects.exists():
+        default_list = FollowList.objects.create(list_name='Default')
+        from .models import PortfolioPaper  # Eğer varsa
 
-    if count == 0:
-        conn = sqlite3.connect(db_path_user_db)
-        cursor = conn.cursor()
-        cursor.execute('''
-        INSERT INTO FOLLOW_LIST(list_name) VALUES ('Default')
-        ''')
-        
-        cursor.execute(''' SELECT paper_id FROM PORTFOLIO_PAPER ''')
-        rows = cursor.fetchall()
-        for row in rows:
-            paper_id = row[0]
-            cursor.execute('''
-            INSERT INTO FOLLOWING_PAPER (list_name, paper_id) VALUES (?, ?)
-            ''', ('Default', paper_id))
-            
-        conn.commit()
-        conn.close()
-    
+        for paper in PortfolioPaper.objects.all():
+            FollowingPaper.objects.create(list_name=default_list, paper_id=paper.paper_id)
+
     return return_follow_list(request)
-    
+
 def return_follow_list(request):
-    conn = sqlite3.connect(db_path_user_db)
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT list_name, paper_id FROM FOLLOWING_PAPER
-    ''')
-    rows = cursor.fetchall()
-    conn.close()
-
+    data = {}
+    for item in FollowingPaper.objects.select_related('list_name').all():
+        list_name = item.list_name.list_name
+        data.setdefault(list_name, []).append(item.paper_id)
     
-    follow_lists = {}
-    for list_name, paper_id in rows:
-        if list_name not in follow_lists:
-            follow_lists[list_name] = []
-        follow_lists[list_name].append(paper_id)
-
-    return JsonResponse(follow_lists, safe=False, json_dumps_params={'ensure_ascii': False})
-
-
+    return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
         
     

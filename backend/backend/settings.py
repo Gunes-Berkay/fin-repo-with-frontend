@@ -89,6 +89,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',  # Default database
+    },
+    'papers_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR /'charts'/'trading'/'papers.sqlite3',  #papers_db
     }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ChartContainer from './Charts/ChartContainer.tsx';
 import { FaBook, FaEye, FaNewspaper, FaTimes } from 'react-icons/fa'; // FontAwesome ikonları
 
@@ -8,6 +8,12 @@ const MainPage = () => {
   const [showPaperNews, setShowPaperNews] = useState(false);
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
+  const [watchListData, setWatchListData] = useState([]); 
+  
+
+  useEffect(() => {
+    fetchStartWatchList(); 
+  }, [])
 
   const handleIconClick = (type) => {   
     setIsSidebarOpen(true);   
@@ -15,6 +21,81 @@ const MainPage = () => {
     setShowWatchlist(type === 'watchlist');
     setShowResearch(type === 'research');
   };
+
+  const fetchStartWatchList = async () => {
+    const response = await fetch('http://127.0.0.1:8000/charts'); 
+    const data = await response.json();
+    setWatchListData(data);
+    console.log(data); 
+  }
+
+  const addPapertoWatchList = async (paper_id, follow_list_name) => {
+    const formData = new FormData();
+    formData.append('paper_id', paper_id);
+    formData.append('follow_list_name', follow_list_name);
+  
+    const response = await fetch('http://127.0.0.1:8000/follow-lists/add-paper/', {
+      method: 'POST',
+      body: formData,
+    });
+  
+    if (response.ok) {
+      console.log('Paper added to watchlist:', paper);
+    } else {
+      console.error('Failed to add paper to watchlist');
+    }
+  };
+
+  const createFollowList = async (follow_list_name) => {
+    const formData = new FormData();
+    formData.append('follow_list_name', follow_list_name);
+  
+    const response = await fetch('http://127.0.0.1:8000/follow-lists/create/', {
+      method: 'POST',
+      body: formData,
+    });
+  
+    const data = await response.json();
+    if (response.ok) {
+      console.log('Follow list created:', data);
+    } else {
+      console.error('Failed to create follow list:', data);
+    }
+  };
+
+  const getFollowLists = async () => {
+    const response = await fetch('http://127.0.0.1:8000/follow-lists/get/');
+    const data = await response.json();
+  
+    if (response.ok) {
+      console.log('Follow lists:', data);
+      return data;
+    } else {
+      console.error('Failed to fetch follow lists');
+    }
+  };
+
+  const removePaperFromWatchList = async (paper_id, follow_list_name) => {
+    const formData = new FormData();
+    formData.append('paper_id', paper_id);
+    formData.append('follow_list_name', follow_list_name);
+  
+    const response = await fetch('http://127.0.0.1:8000/follow-lists/remove-paper/', {
+      method: 'POST',
+      body: formData,
+    });
+  
+    const data = await response.json();
+    if (response.ok) {
+      console.log('Paper removed from watchlist:', data);
+    } else {
+      console.error('Failed to remove paper from watchlist:', data);
+    }
+  };
+  
+
+  
+
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
