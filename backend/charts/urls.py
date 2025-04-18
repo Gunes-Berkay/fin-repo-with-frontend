@@ -9,6 +9,7 @@ from .views import (
     add_paper_to_follow_list,
     remove_paper_from_follow_list,
     return_follow_list,
+    update_following_papers
 )
 
 urlpatterns = [
@@ -24,4 +25,5 @@ urlpatterns = [
     path('follow-lists/remove-paper/', remove_paper_from_follow_list, name='remove_paper_from_follow_list'),
 
     path('follow-lists/data/', return_follow_list, name='return_follow_list'),
+    path('update-following-paper', update_following_papers ,name='update_following_paper'),
 ]

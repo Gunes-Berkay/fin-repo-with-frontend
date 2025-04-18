@@ -169,4 +169,34 @@ def return_follow_list(request):
     
     return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
         
-    
+
+from .models import FollowingPaper
+from tvDatafeed import TvDatafeed, Interval
+import logging
+
+def get_24h_change(symbol, exchange='BINANCE'):
+    tv = TvDatafeed()
+    data = tv.get_hist(symbol=symbol, exchange=exchange, interval=Interval.in_daily, n_bars=2)
+
+    previous_close = data['close'].iloc[0]
+    current_close = data['close'].iloc[1]
+
+    change_24h = ((current_close - previous_close) / previous_close) * 100
+
+    return current_close, change_24h
+
+
+def update_following_papers():
+    papers = FollowingPaper.objects.select_related('paper')
+    #Buradajş fp her bir FollowingPaper nesnesini temsil eder
+    # ve fp.paper ile ilgili CMCInfo nesnesine erişebiliriz.
+    for fp in papers:
+        symbol = fp.paper.symbol.upper() + 'USDT'
+        try:
+            current_price, change_24h = get_24h_change(symbol)
+            fp.price = current_price
+            fp.percent_change_24h = change_24h
+            fp.save()
+            print(f"{symbol} güncellendi → Price: {current_price}, 24h Change: {change_24h:.2f}%")
+        except Exception as e:
+            logging.warning(f"{symbol} güncellenemedi: {e}")

@@ -41,6 +41,8 @@ class CMCInfo(models.Model):
 class FollowingPaper(models.Model):
     list_name = models.ForeignKey(FollowList, on_delete=models.CASCADE)
     paper = models.ForeignKey(CMCInfo, on_delete=models.CASCADE)
+    price = models.FloatField(default=0.0)
+    percent_change_24h = models.FloatField(default=0.0)
 
     class Meta:
         db_table = "following_paper_charts"

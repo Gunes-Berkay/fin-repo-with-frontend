@@ -9,6 +9,7 @@ const MainPage = () => {
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [watchListData, setWatchListData] = useState([]); 
+  const [loading, setLoading] = useState(false);
   
 
   useEffect(() => {
@@ -23,10 +24,25 @@ const MainPage = () => {
   };
 
   const fetchStartWatchList = async () => {
-    const response = await fetch('http://127.0.0.1:8000/charts'); 
+    const response = await fetch('http://127.0.0.1:8000/charts/'); 
     const data = await response.json();
     setWatchListData(data);
     console.log(data); 
+  }
+
+
+  const uptdateFollowingPaper = async () => {
+    setLoading(true);
+    const response = await fetch('http://127.0.0.1:8000/update-following-paper/', {
+      method: 'POST',
+    });
+    setLoading(false);
+    if (response.ok) {
+      console.log('Prices updated');
+      fetchStartWatchList();
+    } else {
+      console.error('Failed to update prices');
+    }
   }
 
   const addPapertoWatchList = async (paper_id, follow_list_name) => {
@@ -40,7 +56,7 @@ const MainPage = () => {
     });
   
     if (response.ok) {
-      console.log('Paper added to watchlist:', paper);
+      console.log('Paper added to watchlist:', paper_id);
     } else {
       console.error('Failed to add paper to watchlist');
     }
@@ -169,33 +185,40 @@ const MainPage = () => {
           <p>Buraya her şeyi koyabilirsin.</p>
 
           {showPaperNews && <p>📰 Haberler aktif</p>}
-          {showWatchlist && 
-          <div>
-            <p>👁️ İzleme Listesi aktif</p>
-            <div>
-              <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-                <thead>
-                  <tr>
-                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
-                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
-                    <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ border: '1px solid #ddd', padding: '3px' }}>Örnek İzleme 1</td>
-                  </tr>
-                  <tr>
-                    <td style={{ border: '1px solid #ddd', padding: '3px' }}>Örnek İzleme 2</td>
-                  </tr>
-                  <tr>
-                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>Örnek İzleme 3</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          {showWatchlist && (
+            <>
+              {loading ? <div>Loading...</div> : <div>Prices are updated!</div>}
 
-          </div>}
+              <div>
+                <p>👁️ İzleme Listesi aktif</p>
+                <div>
+                  <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
+                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
+                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Watchlist data üzerinden döngü oluştur */}
+                      console.log('watchListData:', watchListData);
+
+                      {watchListData.data.map((item, index) => (
+                        <tr key={index}>
+                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.symbol}</td>
+                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.price}</td>
+                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.change_24h}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+
           {showResearch && <p>📚 Araştırmalar aktif</p>}
         </div>
       )}
