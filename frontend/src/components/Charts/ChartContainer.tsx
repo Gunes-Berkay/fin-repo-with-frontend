@@ -10,7 +10,7 @@ import MfiChart from './MfiChart';
 import ObvChart from './ObvChart';
 import AdxChart from './AdxChart';
 
-const ChartContainer = () => {
+const ChartContainer = ({interval, symbol}) => {
   const [chartData, setChartData] = useState([]);
   interface IndicatorsData {
     rsi: number[][];
@@ -55,7 +55,7 @@ const ChartContainer = () => {
   });
 
   const fetchData = async (timeFrame) => {
-    const response = await fetch(`http://127.0.0.1:8000/charts/table/DOGEUSDTon4hlmt${timeFrame}/`);
+    const response = await fetch(`http://127.0.0.1:8000/charts/table/${symbol}on${interval}lmt${timeFrame}/`);
     const data = await response.json();
 
     const formattedCandlestickData = data.table_data.map(item => [

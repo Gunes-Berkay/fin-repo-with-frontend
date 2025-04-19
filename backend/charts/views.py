@@ -11,6 +11,7 @@ import ccxt
 import pandas as pd
 from .models import FollowList, FollowingPaper
 from django.views.decorators.csrf import csrf_exempt
+from .models import CMCInfo, FollowingPaper
 
 INTERVALS = ['15m', '1h', '4h', '1d']
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -176,12 +177,23 @@ def return_follow_list(request):
     
     return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
         
+def get_paper_names(request):
+    data = []
+    papers = CMCInfo.objects.all()
+    
+    for paper in papers:
+        data.append({    
+            'name': paper.name,
+            'symbol': paper.symbol
+        })
+    
+    return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
+    
 
-from .models import FollowingPaper
-from tvDatafeed import TvDatafeed, Interval
-import logging
 
 def get_24h_change(symbol, exchange='BINANCE'):
+    from tvDatafeed import TvDatafeed, Interval
+    import logging
     tv = TvDatafeed()
     data = tv.get_hist(symbol=symbol, exchange=exchange, interval=Interval.in_daily, n_bars=2)
 

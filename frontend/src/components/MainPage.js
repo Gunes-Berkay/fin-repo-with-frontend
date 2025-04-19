@@ -10,6 +10,19 @@ const MainPage = () => {
   const [showResearch, setShowResearch] = useState(false);
   const [watchListData, setWatchListData] = useState([]); 
   const [loading, setLoading] = useState(false);
+  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [interval, setInterval] = useState('4h');
+
+  const [expandedLists, setExpandedLists] = useState({});
+
+  const toggleList = (listName) => {
+    setExpandedLists((prev) => ({
+      ...prev,
+      [listName]: !prev[listName],
+    }));
+  };
+
+
   
 
   useEffect(() => {
@@ -125,7 +138,7 @@ const MainPage = () => {
         }}
       >
         <h2>Grafik Sayfası</h2>
-        <ChartContainer />
+        <ChartContainer interval={interval} key = {symbol} symbol={symbol} />
       </div>
 
       <div
@@ -192,38 +205,55 @@ const MainPage = () => {
               <div>
                 <p>👁️ İzleme Listesi aktif</p>
                 <div>
-                  <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-                    <thead>
-                      <tr>
-                      <th style={{ border: '1px solid #ddd', padding: '3px' }}>List</th>
-                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
-                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
-                        <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    
-                      {Object.entries(watchListData).map(([listName, items]) =>
-                        items.map((item, index) => (
-                          <tr key={`${listName}-${index}`}>
-                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{listName}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.symbol}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.price}</td>
-                            <td
-                              style={{
-                                border: '1px solid #ddd',
-                                padding: '3px',
-                                color: item.change_24h >= 0 ? 'green' : 'red',
-                              }}
-                            >
-                              {item.change_24h}%
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
+                      <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
+                      <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(watchListData).map(([listName, items]) => (
+                      <React.Fragment key={listName}>
+                        {/* Group Header Row */}
+                        <tr onClick={() => toggleList(listName)} style={{ cursor: 'pointer', background: '#f0f0f0' }}>
+                          <td colSpan={4} style={{ border: '1px solid #ddd', padding: '6px', fontWeight: 'bold' }}>
+                            {expandedLists[listName] ? '▼' : '►'} {listName}
+                          </td>
+                        </tr>
 
-                    </tbody>
-                  </table>
+                        {/* Group Content Rows */}
+                        {expandedLists[listName] &&
+                          items.map((item, index) => (
+                            <tr key={`${listName}-${index}`}>
+                              <td style={{ border: '1px solid #ddd', padding: '3px' }}></td>
+                              <td style={{ border: '1px solid #ddd', padding: '3px' }}>
+                                <button
+                                  onClick={() => {
+                                    setSymbol(item.symbol + 'USDT');
+                                  }}
+                                >
+                                  {item.symbol}
+                                </button>
+                              </td>
+                              <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.price}</td>
+                              <td
+                                style={{
+                                  border: '1px solid #ddd',
+                                  padding: '3px',
+                                  color: item.change_24h >= 0 ? 'green' : 'red',
+                                }}
+                              >
+                                {item.change_24h}%
+                              </td>
+                            </tr>
+                          ))}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+
                 </div>
               </div>
             </>
