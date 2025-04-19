@@ -34,6 +34,7 @@ const MainPage = () => {
     setShowPaperNews(type === 'paper');
     setShowWatchlist(type === 'watchlist');
     setShowResearch(type === 'research');
+    updateFollowingPaper();
   };
 
   const fetchStartWatchList = async () => {
@@ -44,7 +45,7 @@ const MainPage = () => {
   }
 
 
-  const uptdateFollowingPaper = async () => {
+  const updateFollowingPaper = async () => {
     setLoading(true);
     const response = await fetch('http://127.0.0.1:8000/update-following-paper/', {
       method: 'POST',
@@ -227,7 +228,7 @@ const MainPage = () => {
                         {expandedLists[listName] &&
                           items.map((item, index) => (
                             <tr key={`${listName}-${index}`}>
-                              <td style={{ border: '1px solid #ddd', padding: '3px' }}></td>
+                              
                               <td style={{ border: '1px solid #ddd', padding: '3px' }}>
                                 <button
                                   onClick={() => {
@@ -245,7 +246,7 @@ const MainPage = () => {
                                   color: item.change_24h >= 0 ? 'green' : 'red',
                                 }}
                               >
-                                {item.change_24h}%
+                                {parseFloat(item.change_24h).toFixed(2)}%
                               </td>
                             </tr>
                           ))}

@@ -10,21 +10,10 @@ import MfiChart from './MfiChart';
 import ObvChart from './ObvChart';
 import AdxChart from './AdxChart';
 
-const ChartContainer = ({interval, symbol}) => {
+const ChartContainer = ({ interval, symbol }) => {
   const [chartData, setChartData] = useState([]);
-  interface IndicatorsData {
-    rsi: number[][];
-    macd: number[][];
-    volume: number[][];
-    stoch: number[][];
-    cmf: number[][];
-    cci: number[][];
-    mfi: number[][];
-    obv: number[][];
-    adx: number[][];
-  }
 
-  const [indicatorsData, setIndicatorsData] = useState<IndicatorsData>({
+  const [indicatorsData, setIndicatorsData] = useState({
     rsi: [],
     macd: [],
     volume: [],
@@ -35,12 +24,15 @@ const ChartContainer = ({interval, symbol}) => {
     obv: [],
     adx: [],
   });
+
   const [timeFrame, setTimeFrame] = useState(500);
   const [containerHeight, setContainerHeight] = useState(500);
   const [containerHeightforIndicators, setContainerHeightforIndicators] = useState(300);
   const [bullTotalData, setBullTotalData] = useState([]);
   const [bearishTotalData, setBearishTotalData] = useState([]);
   const [nadarayaWatsonData, setNadarayaWatsonData] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [enabledIndicators, setEnabledIndicators] = useState({
     rsi: true,
@@ -53,6 +45,18 @@ const ChartContainer = ({interval, symbol}) => {
     obv: false,
     adx: false,
   });
+
+  const allIndicators = [
+    { key: 'rsi', label: 'RSI' },
+    { key: 'macd', label: 'MACD' },
+    { key: 'volume', label: 'Volume' },
+    { key: 'stoch', label: 'Stochastic' },
+    { key: 'cmf', label: 'CMF' },
+    { key: 'cci', label: 'CCI' },
+    { key: 'mfi', label: 'MFI' },
+    { key: 'obv', label: 'OBV' },
+    { key: 'adx', label: 'ADX' },
+  ];
 
   const fetchData = async (timeFrame) => {
     const response = await fetch(`http://127.0.0.1:8000/charts/table/${symbol}on${interval}lmt${timeFrame}/`);
@@ -67,20 +71,20 @@ const ChartContainer = ({interval, symbol}) => {
     ]);
 
     const formattedBullTotalData = data.table_data
-    .filter(item => item.Bull_Total > 5)
-    .map(item => [
-      item.datetime,
-      item.low,
-      item.Bull_Total
-    ]);
+      .filter(item => item.Bull_Total > 5)
+      .map(item => [
+        item.datetime,
+        item.low,
+        item.Bull_Total
+      ]);
 
     const formattedBearishTotalData = data.table_data
-    .filter(item => item.Bearish_Total > 5)
-    .map(item => [
-      item.datetime,
-      item.high,
-      item.Bearish_Total
-    ]);
+      .filter(item => item.Bearish_Total > 5)
+      .map(item => [
+        item.datetime,
+        item.high,
+        item.Bearish_Total
+      ]);
 
     const formattedNadarayaWatsonData = data.table_data.map(item => [
       item.datetime,
@@ -92,7 +96,6 @@ const ChartContainer = ({interval, symbol}) => {
       item.lower_far,
       item.lower_top
     ]);
-
 
     const extractIndicatorData = (key) => data.table_data.map(item => [item.datetime, item[key]]);
 
@@ -118,53 +121,80 @@ const ChartContainer = ({interval, symbol}) => {
     fetchData(timeFrame);
   }, [timeFrame]);
 
-  const increaseTimeFrame = () => {
-    setTimeFrame(timeFrame+100);
-  };
-
-  const decreaseTimeFrame = () => {
-    setTimeFrame(timeFrame-100);
-  };
-
-  const increaseHeight = () => {
-    setContainerHeight(prev => prev + 100);
-    setContainerHeightforIndicators(prev => prev + 50);
-  };
-
-  const decreaseHeight = () => {
-    setContainerHeight(prev => prev - 100);
-    setContainerHeightforIndicators(prev => prev - 50);
-  };
-
-  const handleCheckboxChange = (indicator) => {
+  const handleCheckboxChange = (indicatorKey) => {
     setEnabledIndicators(prev => ({
       ...prev,
-      [indicator]: !prev[indicator],
+      [indicatorKey]: !prev[indicatorKey],
     }));
   };
 
+  const filteredIndicators = allIndicators.filter(i =>
+    i.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
-      <button onClick={increaseTimeFrame}>🔼 Zaman Aralığını Genişlet</button>
-      <button onClick={decreaseTimeFrame}>🔽 Zaman Aralığını Küçült</button>
-      <button onClick={increaseHeight}>📏 Yüksekliği Artır</button>
-      <button onClick={decreaseHeight}>📏 Yüksekliği Azalt</button>
-
-      <div>
-        {Object.keys(enabledIndicators).map((key) => (
-          <label key={key} style={{ marginRight: '10px' }}>
-            <input
-              type="checkbox"
-              checked={enabledIndicators[key]}
-              onChange={() => handleCheckboxChange(key)}
-            />
-            {key.toUpperCase()}
-          </label>
-        ))}
+      <div style={{ marginBottom: '10px' }}>
+        <button onClick={() => setTimeFrame(t => t + 100)}>🔼 Zaman Aralığını Genişlet</button>
+        <button onClick={() => setTimeFrame(t => t - 100)}>🔽 Zaman Aralığını Küçült</button>
+        <button onClick={() => {
+          setContainerHeight(h => h + 100);
+          setContainerHeightforIndicators(h => h + 50);
+        }}>📏 Yüksekliği Artır</button>
+        <button onClick={() => {
+          setContainerHeight(h => h - 100);
+          setContainerHeightforIndicators(h => h - 50);
+        }}>📏 Yüksekliği Azalt</button>
+        <button onClick={() => setModalVisible(true)}>🧮 İndikatör Seç</button>
       </div>
-      
 
-      <CandlestickChart chartData={chartData} containerHeight={containerHeight} bullTotalData={bullTotalData} bearishTotalData={bearishTotalData} nadarayaWatsonData={nadarayaWatsonData}/>
+      {modalVisible && (
+        <div style={{
+          position: 'fixed',
+          top: '10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'white',
+          padding: '20px',
+          boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+          zIndex: 1000
+        }}>
+          <h3>İndikatör Seç</h3>
+          <input
+            type="text"
+            placeholder="İndikatör ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+          />
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {filteredIndicators.map(ind => (
+              <div key={ind.key}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={enabledIndicators[ind.key]}
+                    onChange={() => handleCheckboxChange(ind.key)}
+                  />
+                  {ind.label}
+                </label>
+              </div>
+            ))}
+          </div>
+          <hr />
+          <div>
+            <strong>Aktif İndikatörler:</strong>
+            {Object.entries(enabledIndicators).filter(([k, v]) => v).map(([key]) => (
+              <div key={key} style={{ marginBottom: '5px' }}>
+              {key.toUpperCase()} <button onClick={() => handleCheckboxChange(key)}>❌</button>
+            </div>
+            ))}
+          </div>
+          <button onClick={() => setModalVisible(false)} style={{ marginTop: '10px' }}>Kapat</button>
+        </div>
+      )}
+
+      <CandlestickChart chartData={chartData} containerHeight={containerHeight} bullTotalData={bullTotalData} bearishTotalData={bearishTotalData} nadarayaWatsonData={nadarayaWatsonData} />
 
       {enabledIndicators.rsi && <RsiChart rsiData={indicatorsData.rsi} containerHeight={containerHeightforIndicators} />}
       {enabledIndicators.macd && <MacdChart macdData={indicatorsData.macd} containerHeight={containerHeightforIndicators} />}

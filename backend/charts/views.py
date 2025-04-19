@@ -193,7 +193,6 @@ def get_paper_names(request):
 
 def get_24h_change(symbol, exchange='BINANCE'):
     from tvDatafeed import TvDatafeed, Interval
-    import logging
     tv = TvDatafeed()
     data = tv.get_hist(symbol=symbol, exchange=exchange, interval=Interval.in_daily, n_bars=2)
 
@@ -204,11 +203,12 @@ def get_24h_change(symbol, exchange='BINANCE'):
 
     return current_close, change_24h
 
-
-def update_following_papers():
+@csrf_exempt
+def update_following_papers(request):
+    import logging
+    
     papers = FollowingPaper.objects.select_related('paper')
-    #Buradajş fp her bir FollowingPaper nesnesini temsil eder
-    # ve fp.paper ile ilgili CMCInfo nesnesine erişebiliriz.
+    
     for fp in papers:
         symbol = fp.paper.symbol.upper() + 'USDT'
         try:
@@ -219,3 +219,9 @@ def update_following_papers():
             print(f"{symbol} güncellendi → Price: {current_price}, 24h Change: {change_24h:.2f}%")
         except Exception as e:
             logging.warning(f"{symbol} güncellenemedi: {e}")
+    
+    if request.method == 'POST':
+        # Buraya işlemlerini yazabilirsin (örneğin veritabanı güncellemesi)
+        return JsonResponse({'message': 'Updated successfully'}, status=200)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
