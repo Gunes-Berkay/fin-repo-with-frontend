@@ -163,9 +163,16 @@ def send_follow_list_on_start(request):
 
 def return_follow_list(request):
     data = {}
-    for item in FollowingPaper.objects.select_related('list_name').all():
+    papers = FollowingPaper.objects.select_related('list_name', 'paper').all()
+    
+    for item in papers:
         list_name = item.list_name.list_name
-        data.setdefault(list_name, []).append(item.paper_id)
+        coin_data = {
+            'symbol': item.paper.symbol,
+            'price': item.price,
+            'change_24h': item.percent_change_24h
+        }
+        data.setdefault(list_name, []).append(coin_data)
     
     return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
         

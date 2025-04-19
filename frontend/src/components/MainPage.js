@@ -195,22 +195,33 @@ const MainPage = () => {
                   <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                     <thead>
                       <tr>
+                      <th style={{ border: '1px solid #ddd', padding: '3px' }}>List</th>
                         <th style={{ border: '1px solid #ddd', padding: '3px' }}>Symbol</th>
                         <th style={{ border: '1px solid #ddd', padding: '3px' }}>Price</th>
                         <th style={{ border: '1px solid #ddd', padding: '3px' }}>24h%</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Watchlist data üzerinden döngü oluştur */}
-                      console.log('watchListData:', watchListData);
+                    
+                      {Object.entries(watchListData).map(([listName, items]) =>
+                        items.map((item, index) => (
+                          <tr key={`${listName}-${index}`}>
+                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{listName}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.symbol}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.price}</td>
+                            <td
+                              style={{
+                                border: '1px solid #ddd',
+                                padding: '3px',
+                                color: item.change_24h >= 0 ? 'green' : 'red',
+                              }}
+                            >
+                              {item.change_24h}%
+                            </td>
+                          </tr>
+                        ))
+                      )}
 
-                      {watchListData.data.map((item, index) => (
-                        <tr key={index}>
-                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.symbol}</td>
-                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.price}</td>
-                          <td style={{ border: '1px solid #ddd', padding: '3px' }}>{item.change_24h}%</td>
-                        </tr>
-                      ))}
                     </tbody>
                   </table>
                 </div>

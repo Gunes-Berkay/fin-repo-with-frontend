@@ -7,6 +7,10 @@ class FollowList(models.Model):
 
     def __str__(self):
         return self.list_name
+    
+    class Meta:
+        db_table = "follow_list_charts"
+        app_label = 'charts'
 
 
 class CMCInfo(models.Model):
