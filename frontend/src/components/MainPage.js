@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ChartContainer from './Charts/ChartContainer.tsx';
 import { FaBook, FaEye, FaNewspaper, FaTimes } from 'react-icons/fa'; // FontAwesome ikonları
+import Modal from 'react-modal'; // Modal bileşeni
 
 const MainPage = () => {
   const [currentType, setCurrentType] = useState('default'); 
@@ -12,8 +13,19 @@ const MainPage = () => {
   const [loading, setLoading] = useState(false);
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('4h');
+  const [paperNames, setPaperNames] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+
 
   const [expandedLists, setExpandedLists] = useState({});
+
+  const fetchPaperNames = async () => {
+    const response = await fetch('http://127.0.0.1:8000/get-paper-names/'); 
+    const data = await response.json();
+    setPaperNames(data);
+    console.log(data); 
+  }
 
   const toggleList = (listName) => {
     setExpandedLists((prev) => ({
@@ -27,6 +39,7 @@ const MainPage = () => {
 
   useEffect(() => {
     fetchStartWatchList(); 
+    fetchPaperNames();
   }, [])
 
   const handleIconClick = (type) => {   
@@ -43,6 +56,8 @@ const MainPage = () => {
     setWatchListData(data);
     console.log(data); 
   }
+
+  
 
 
   const updateFollowingPaper = async () => {
@@ -139,8 +154,54 @@ const MainPage = () => {
         }}
       >
         <h2>Grafik Sayfası</h2>
+        <button onClick={() => setIsModalOpen(true)}>Grafik Değiştir</button>
         <ChartContainer interval={interval} key = {symbol} symbol={symbol} />
       </div>
+
+      <Modal
+          isOpen={isModalOpen}
+          onRequestClose={() => setIsModalOpen(false)}
+          contentLabel="Paper Seç"
+          style={{
+            content: {
+              width: '400px',
+              margin: 'auto',
+              padding: '20px',
+            }
+          }}
+        >
+          <h3>Paper Seç</h3>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="İsim ya da sembol girin"
+            style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+          />
+
+          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            {paperNames
+              .filter(paper =>
+                paper.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+                paper.symbol.toLowerCase().includes(searchInput.toLowerCase())
+              )
+              .map((paper, index) => (
+                <div
+                  key={index}
+                  style={{ padding: '5px', cursor: 'pointer', borderBottom: '1px solid #ddd' }}
+                  onClick={() => {
+                    setSymbol(paper.symbol + 'USDT');
+                    setIsModalOpen(false);
+                    setSearchInput('');
+                  }}
+                >
+                  {paper.name} ({paper.symbol})
+                </div>
+              ))}
+          </div>
+
+          <button onClick={() => setIsModalOpen(false)} style={{ marginTop: '10px' }}>Kapat</button>
+        </Modal>
 
       <div
         style={{
