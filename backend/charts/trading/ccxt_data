@@ -1,0 +1,28 @@
+import ccxt
+import pandas as pd
+from datetime import datetime
+
+# Binance borsasını CCXT ile başlatıyoruz
+exchange = ccxt.binance({
+    'enableRateLimit': True,  # Rate limit'e uymak için
+})
+
+# BTC/USDT paritesinin günlük verilerini alıyoruz
+symbol = 'BTC/USDT'
+timeframe = '1d'  # 1 günlük zaman dilimi (1d, 1h, 5m vb. kullanılabilir)
+since = exchange.parse8601('2019-01-01T00:00:00Z')  # Verilerin başlama tarihi
+
+# Binance API'den BTC/USDT paritesinin geçmiş verilerini çekiyoruz
+ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since=since)
+
+# Verileri bir pandas DataFrame'e dönüştürüyoruz
+data = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+
+# Tarih sütununu doğru formatta göstermek için
+data['timestamp'] = pd.to_datetime(data['timestamp'], unit='ms')
+
+# Verileri yazdırıyoruz
+print(data)
+
+# İsteğe bağlı olarak CSV dosyasına kaydedebilirsiniz
+data.to_csv('btc_usdt_daily_data.csv', index=False)

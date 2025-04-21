@@ -1,0 +1,68 @@
+import ccxt
+
+# Seçilen platformlar
+selected_exchanges = [
+     'kraken'
+    
+]
+#selected_exchanges = [
+#    'binance', 'coinbase', 'kraken', 'kucoin', 'bitfinex',
+#    'bybit', 'okx', 'gateio', 'bitstamp'
+#]
+
+# En çok kazanan ve kaybeden coin'leri saklayacağımız dict
+bests = {}
+worsts = {}
+
+# Her bir exchange'den veri almayı deneyelim
+for exchange_id in selected_exchanges:
+    try:
+        # İlgili exchange sınıfını al
+        exchange_class = getattr(ccxt, exchange_id)
+        exchange = exchange_class()
+
+        # Market verilerini yükle
+        markets = exchange.load_markets()
+
+        # En çok kazanan ve kaybeden coin'leri bulmak için veri listesi
+        symbols = []
+        
+        for symbol in markets.keys():
+            try:
+                # Ticker verisini al
+                ticker = exchange.fetch_ticker(symbol)
+                change_24h = ticker['percentage']  # Yüzde değişim
+
+                # Veriyi listeye ekle
+                symbols.append({
+                    'symbol': symbol,
+                    'change_24h': change_24h
+                })
+
+            except Exception as e:
+                # Hata durumunda sembolü atla
+                print(f"{exchange_id} borsasında {symbol} sembolü ile ilgili hata: {e}")
+                continue
+
+        # En çok kazanan ve kaybedenleri sırala
+        sorted_symbols = sorted(symbols, key=lambda x: x['change_24h'], reverse=True)
+        
+        # Borsada en çok kazananı ve kaybedeni seç
+        if sorted_symbols:
+            best = sorted_symbols[0]  # En çok kazanan
+            worst = sorted_symbols[-1]  # En çok kaybeden
+
+            bests[exchange_id] = best
+            worsts[exchange_id] = worst
+
+    except Exception as e:
+        print(f"{exchange_id} hatası: {e}")
+        continue
+
+# Sonuçları yazdır
+print("En Çok Kazanan ve Kaybeden Coinler:")
+for exchange in selected_exchanges:
+    if exchange in bests:
+        print(f"\n{exchange}:")
+        print(f"  En Çok Kazanan: {bests[exchange]['symbol']} → {bests[exchange]['change_24h']}%")
+        print(f"  En Çok Kaybeden: {worsts[exchange]['symbol']} → {worsts[exchange]['change_24h']}%")

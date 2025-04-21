@@ -33,6 +33,8 @@ class CMCInfo(models.Model):
     percent_change_7d = models.FloatField(default=0.0)
     percent_change_30d = models.FloatField(default=0.0)
     percent_change_90d = models.FloatField(default=0.0)
+    platforms = models.TextField(default="", blank=True)  
+
     
     class Meta:
         db_table = "CMC_INFO_charts"
