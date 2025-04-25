@@ -147,12 +147,18 @@ def add_paper_to_follow_list(request):
 
 @csrf_exempt
 def remove_paper_from_follow_list(request):
-    paper_id = request.POST.get('paper_id')
+    paper_name = request.POST.get('paper_name')
     follow_list_name = request.POST.get('follow_list_name')
-    if not paper_id or not follow_list_name:
-        return JsonResponse({'error': 'paper_id and follow list name are required'}, status=400)
-    
-    FollowingPaper.objects.filter(list_name__list_name=follow_list_name, paper_id=paper_id).delete()
+
+    paper = CMCInfo.objects.filter(symbol=paper_name).first()
+    if not paper or not follow_list_name:
+        return JsonResponse({'error': 'paper and follow list name are required'}, status=400)
+
+    deleted, _ = FollowingPaper.objects.filter(
+        list_name__list_name=follow_list_name,
+        paper=paper
+    ).delete()
+
     return JsonResponse({'message': 'Coin removed from follow list successfully'}, status=200)
 
 def send_follow_list_on_start(request):
@@ -167,17 +173,21 @@ def send_follow_list_on_start(request):
 
 def return_follow_list(request):
     data = {}
-    papers = FollowingPaper.objects.select_related('list_name', 'paper').all()
-    
-    for item in papers:
-        list_name = item.list_name.list_name
-        coin_data = {
-            'symbol': item.paper.symbol,
-            'price': item.price,
-            'change_24h': item.percent_change_24h
-        }
-        data.setdefault(list_name, []).append(coin_data)
-    
+    follow_lists = FollowList.objects.prefetch_related('followingpaper_set__paper').all()
+
+    for follow_list in follow_lists:
+        list_name = follow_list.list_name
+        papers = follow_list.followingpaper_set.all()
+
+        data[list_name] = []
+        for item in papers:
+            coin_data = {
+                'symbol': item.paper.symbol,
+                'price': item.price,
+                'change_24h': item.percent_change_24h
+            }
+            data[list_name].append(coin_data)
+
     return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
         
 def get_paper_names(request):

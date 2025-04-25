@@ -398,7 +398,7 @@ const MainPage = () => {
                                 {parseFloat(item.change_24h).toFixed(2)}%
                               </td>
                               <td style={{ border: '1px solid #ddd', padding: '3px' }}>
-                                <button onClick={() => removePaperFromWatchList(item.name, listName)}>
+                                <button onClick={() => removePaperFromWatchList(item.symbol, listName)}>
                                   İptal
                                 </button>
                               </td>
