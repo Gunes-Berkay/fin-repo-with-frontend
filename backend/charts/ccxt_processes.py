@@ -2,8 +2,7 @@ import sys
 import os
 import django
 
-# settings.py'nin bulunduğu dizini path'e ekle
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))  # ../backend için
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
@@ -45,7 +44,7 @@ def find_active_exchanges_for_symbol(symbol):
     return active_exchanges
 
 def update_platforms_for_all_papers():
-    all_papers = CMCInfo.objects.all()
+    all_papers = CMCInfo.objects.filter(cmc_rank__gt=240)
 
     for paper in all_papers:
         symbol = paper.symbol + "/USDT"

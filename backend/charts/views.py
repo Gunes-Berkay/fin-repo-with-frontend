@@ -133,13 +133,16 @@ def get_follow_lists(request):
 
 @csrf_exempt
 def add_paper_to_follow_list(request):
-    paper_id = request.POST.get('paper_id')
+    paper_name = request.POST.get('paper_name')
     follow_list_name = request.POST.get('follow_list_name')
-    if not paper_id or not follow_list_name:
-        return JsonResponse({'error': 'paper_id and follow list name are required'}, status=400)
+
+    paper = CMCInfo.objects.filter(name=paper_name).first()
+    if not paper or not follow_list_name:
+        return JsonResponse({'error': 'paper and follow list name are required'}, status=400)
     
     follow_list, _ = FollowList.objects.get_or_create(list_name=follow_list_name)
-    FollowingPaper.objects.get_or_create(list_name=follow_list, paper_id=paper_id)
+    FollowingPaper.objects.get_or_create(list_name=follow_list, paper=paper)
+
     return JsonResponse({'message': 'Coin added to follow list successfully'}, status=201)
 
 @csrf_exempt
