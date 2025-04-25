@@ -16,7 +16,10 @@ const MainPage = () => {
   const [paperNames, setPaperNames] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-
+  const [addPaperModalOpen, setAddPaperModalOpen] = useState(false);
+  const [addPaperName, setAddPaperName] = useState('');
+  const [addPaperListName, setAddPaperListName] = useState();
+  const [createFollowListModal, setCreateFollowListModal] = useState(false);
 
   const [expandedLists, setExpandedLists] = useState({});
 
@@ -74,9 +77,9 @@ const MainPage = () => {
     }
   }
 
-  const addPapertoWatchList = async (paper_id, follow_list_name) => {
+  const addPapertoWatchList = async (paper_name, follow_list_name) => {
     const formData = new FormData();
-    formData.append('paper_id', paper_id);
+    formData.append('paper_name', paper_name);
     formData.append('follow_list_name', follow_list_name);
   
     const response = await fetch('http://127.0.0.1:8000/follow-lists/add-paper/', {
@@ -85,7 +88,7 @@ const MainPage = () => {
     });
   
     if (response.ok) {
-      console.log('Paper added to watchlist:', paper_id);
+      console.log('Paper added to watchlist:', paper_name);
     } else {
       console.error('Failed to add paper to watchlist');
     }
@@ -120,9 +123,9 @@ const MainPage = () => {
     }
   };
 
-  const removePaperFromWatchList = async (paper_id, follow_list_name) => {
+  const removePaperFromWatchList = async (paper_name, follow_list_name) => {
     const formData = new FormData();
-    formData.append('paper_id', paper_id);
+    formData.append('paper_name', paper_name);
     formData.append('follow_list_name', follow_list_name);
   
     const response = await fetch('http://127.0.0.1:8000/follow-lists/remove-paper/', {
@@ -266,6 +269,80 @@ const MainPage = () => {
 
               <div>
                 <p>👁️ İzleme Listesi aktif</p>
+                <button onClick={()=> setCreateFollowListModal(true)}>Takip Listesi Oluştur</button>
+                <Modal
+                  isOpen={createFollowListModal}
+                  onRequestClose={() => setCreateFollowListModal(false)}
+                  contentLabel="İsim Gir"
+                  style={{
+                    content: {
+                      width: '400px',
+                      margin: 'auto',
+                      padding: '20px',
+                    }
+                  }}
+                >
+                  <h3>İsim gir</h3>
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="İsim ya da sembol girin"
+                    style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                  />
+                  <button onClick={() => {setCreateFollowListModal(false);
+                    createFollowList(searchInput);
+                    setSearchInput('');
+                  }} style={{ marginTop: '10px' }}>Oluştur</button>
+
+
+                  <button onClick={() => setCreateFollowListModal(false)} style={{ marginTop: '10px' }}>Kapat</button>
+                </Modal>
+                <Modal
+                  isOpen={addPaperModalOpen}
+                  onRequestClose={() => setAddPaperModalOpen(false)}
+                  contentLabel="Paper Seç"
+                  style={{
+                    content: {
+                      width: '400px',
+                      margin: 'auto',
+                      padding: '20px',
+                    }
+                  }}
+                >
+                  <h3>Paper Seç</h3>
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="İsim ya da sembol girin"
+                    style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                  />
+
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {paperNames
+                      .filter(paper =>
+                        paper.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+                        paper.symbol.toLowerCase().includes(searchInput.toLowerCase())
+                      )
+                      .map((paper, index) => (
+                        <div
+                          key={index}
+                          style={{ padding: '5px', cursor: 'pointer', borderBottom: '1px solid #ddd' }}
+                          onClick={() => {
+                            setAddPaperName(paper.name);    
+                            setAddPaperModalOpen(false);                       
+                            setSearchInput('');
+                            addPapertoWatchList(paper.name, addPaperListName); 
+                          }}
+                        >
+                          {paper.name} ({paper.symbol})
+                        </div>
+                      ))}
+                  </div>
+
+                  <button onClick={() => setAddPaperModalOpen(false)} style={{ marginTop: '10px' }}>Kapat</button>
+                </Modal>
                 <div>
                 <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                   <thead>
@@ -279,9 +356,21 @@ const MainPage = () => {
                     {Object.entries(watchListData).map(([listName, items]) => (
                       <React.Fragment key={listName}>
                         {/* Group Header Row */}
-                        <tr onClick={() => toggleList(listName)} style={{ cursor: 'pointer', background: '#f0f0f0' }}>
-                          <td colSpan={4} style={{ border: '1px solid #ddd', padding: '6px', fontWeight: 'bold' }}>
+                        <tr
+                          onClick={() => toggleList(listName)}
+                          style={{ cursor: 'pointer', background: '#f0f0f0' }}
+                        >
+                          <td colSpan={5} style={{ border: '1px solid #ddd', padding: '6px', fontWeight: 'bold' }}>
                             {expandedLists[listName] ? '▼' : '►'} {listName}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAddPaperModalOpen(true);
+                                setAddPaperListName(listName);
+                              }}
+                            >
+                              Takip listesine sembol ekle
+                            </button>
                           </td>
                         </tr>
 
@@ -289,7 +378,6 @@ const MainPage = () => {
                         {expandedLists[listName] &&
                           items.map((item, index) => (
                             <tr key={`${listName}-${index}`}>
-                              
                               <td style={{ border: '1px solid #ddd', padding: '3px' }}>
                                 <button
                                   onClick={() => {
@@ -309,11 +397,17 @@ const MainPage = () => {
                               >
                                 {parseFloat(item.change_24h).toFixed(2)}%
                               </td>
+                              <td style={{ border: '1px solid #ddd', padding: '3px' }}>
+                                <button onClick={() => removePaperFromWatchList(item.name, listName)}>
+                                  İptal
+                                </button>
+                              </td>
                             </tr>
                           ))}
                       </React.Fragment>
                     ))}
                   </tbody>
+
                 </table>
 
                 </div>
