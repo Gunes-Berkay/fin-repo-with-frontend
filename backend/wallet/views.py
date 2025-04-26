@@ -1,13 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Paper, Portfolio, PortfolioPaper, Transactions
-from .serializers import PortfolioPaperSerializer, PortfolioSerializer, PaperSerializer, TransactionsSerializer
+from .models import  Portfolio, PortfolioPaper, Transactions
 from .models import Portfolio
+from charts.models import CMCInfo
 from django.db import transaction
 from django.db import connections
 from django.http import JsonResponse
 import requests
+from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -22,8 +23,8 @@ class AddPaperToPortfolioView(APIView):
 
         try:
             portfolio = Portfolio.objects.get(portfolio_id=portfolio_id)
-            paper = Paper.objects.get(name=paper_name)
-        except (Portfolio.DoesNotExist, Paper.DoesNotExist):
+            paper = CMCInfo.objects.get(name=paper_name)
+        except (Portfolio.DoesNotExist, CMCInfo.DoesNotExist):
             return Response({"error": "Portfolio or Paper not found."}, status=status.HTTP_404_NOT_FOUND)
 
         portfolio_paper = PortfolioPaper.objects.create(
@@ -35,7 +36,6 @@ class AddPaperToPortfolioView(APIView):
 
         portfolio.papers_list.add(paper)
 
-        serializer = PortfolioPaperSerializer(portfolio_paper)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 class createPortfolio(APIView):
@@ -52,9 +52,9 @@ class createPortfolio(APIView):
                 # Papers (hisseler) portföye eklenir
                 for paper_id in papers_data:
                     try:
-                        paper = Paper.objects.get(id=paper_id)  # Her bir paper_id için Paper modelinden obje alınır
+                        paper = CMCInfo.objects.get(id=paper_id)  # Her bir paper_id için Paper modelinden obje alınır
                         portfolio.papers_list.add(paper)  # Portfolio'nun papers_list alanına eklenir
-                    except Paper.DoesNotExist:
+                    except CMCInfo.DoesNotExist:
                         return Response(
                             {"error": f"Paper with ID {paper_id} not found."},
                             status=status.HTTP_404_NOT_FOUND
@@ -79,7 +79,7 @@ class portfolioListView(APIView):
     
 class PaperListView(APIView):
     def get(self, request):
-        papers = Paper.objects.using('papers_db').all()
+        papers = CMCInfo.objects.all()
         serializer = PaperSerializer(papers, many=True)
         return Response(serializer.data)
 
@@ -87,8 +87,8 @@ class TransactionCreateView(APIView):
     def post(self, request):
         paper_name = request.data.get('name')  
         try:
-            paper = Paper.objects.using('papers_db').get(name=paper_name)  
-        except Paper.DoesNotExist:
+            paper = CMCInfo.objects.get(name=paper_name)  
+        except CMCInfo.DoesNotExist:
             return Response({"error": "Paper not found"}, status=status.HTTP_404_NOT_FOUND)
         
         portfolio_name = request.data.get('portfolio')
@@ -120,7 +120,7 @@ class TransactionListView(APIView):
         portfolio_name = request.query_params.get('portfolio_name')
 
         
-        paper = get_object_or_404(Paper, name=paper_name)
+        paper = get_object_or_404(CMCInfo, name=paper_name)
         portfolio = get_object_or_404(Portfolio, name=portfolio_name)
 
         
@@ -152,14 +152,14 @@ class UpdatePaperPrices(APIView):
         # Veritabanındaki her Paper'ın fiyatını güncelliyoruz
         for paper in paper_prices:
             try:
-                paper_obj = Paper.objects.using('papers_db').get(symbol=paper['symbol'])
+                paper_obj = CMCInfo.objects.get(symbol=paper['symbol'])
                 paper_obj.max_supply = paper['max_supply']
                 paper_obj.circulating_supply = paper['circulating_supply']
                 paper_obj.total_supply = paper['total_supply']
                 paper_obj.inifinite_supply = paper['inifinite_supply']
                 paper_obj.cmc_rank = paper['cmc_rank']
                 paper_obj.save()
-            except Paper.DoesNotExist:
+            except CMCInfo.DoesNotExist:
                 continue  # Paper bulunamadıysa geçiyoruz
 
         return Response({"message": "Prices updated successfully"})
