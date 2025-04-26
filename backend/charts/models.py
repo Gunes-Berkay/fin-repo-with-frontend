@@ -14,8 +14,8 @@ class FollowList(models.Model):
 
 
 class CMCInfo(models.Model):
-    cmc_rank = models.IntegerField(primary_key=True, default=0)
-    id = models.IntegerField()  # CoinMarketCap ID
+    cmc_rank = models.IntegerField(default=0)
+    id = models.IntegerField(primary_key=True)  # CoinMarketCap ID
     name = models.TextField(default="")
     symbol = models.TextField(default="")
     price = models.FloatField(default=0.0)
