@@ -1,113 +1,87 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './wallet.css'
-import axios from "axios";
-
-
-
+import './wallet.css';
+import axios from 'axios';
 
 const Wallet = () => {
   const [portfolios, setPortfolios] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [portfolioName, setPortfolioName] = useState([]);
-  const [currentPortfolio, setCurrentPortfolio] = useState([]);
-  const [paperData, setPaperData] = useState({
-    name: '',
-  });
+  const [portfolioName, setPortfolioName] = useState('');
+  const [currentPortfolio, setCurrentPortfolio] = useState(null);
   const [showAddPaperModal, setShowAddPaperModal] = useState(false);
+  const [papers, setPapers] = useState([]);
+  const [filteredPapers, setFilteredPapers] = useState([]);
+  const [selectedPaperName, setSelectedPaperName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [papers, setPapers] = useState([]); 
-  const [filteredPapers, setFilteredPapers] = useState([]); // Filtrelenmiş Paper'lar
-  const [selectedPaperName, setSelectedPaperName] = useState(''); // Seçilen Paper ismi
-  const [searchQuery, setSearchQuery] = useState(''); // Kullanıcı input'u
-
-
-  let counter = 0;
+  // Yeni State
+  const [transactions, setTransactions] = useState([]);
+  const [showTransactionsModal, setShowTransactionsModal] = useState(false);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/portfolios/")
-    .then(response => response.json())
-    .then(portfolios => setPortfolios(portfolios))
-    .catch(error => console.error("Error fetching portfolios:", error));
-
-    
+    fetchPortfolios();
+    fetchPapers();
   }, []);
 
-  useEffect(()=> {
-    fetch("http://127.0.0.1:8000/api/papers/")
-    .then(response => response.json())
-    .then(papers => setPapers(papers))
-    .catch(error => console.error("Error fetching portfolios:", error));
-
-  }, [])
-
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-
-    if (value) {
-      const filtered = papers.filter((paper) => 
-          paper.symbol.toLowerCase().includes(value.toLowerCase()) || 
-          paper.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredPapers(filtered);
-  } else {
-      setFilteredPapers([]);
-  }
-  }
-
-  const handlePaperSelect = (paperName) => {
-    setSelectedPaperName(paperName); 
-    setSearchQuery(paperName); 
-    setFilteredPapers([]); 
-  };
-  
-
-  const toggleModal = () => {
-    setShowModal(!showModal);
-  }
-  const toggleAddPaperModal = () => setShowAddPaperModal(!showAddPaperModal);
-
-
-  const createPortfolio = async () => {
+  const fetchPortfolios = async () => {
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/create-portfolio/", {
-        name: portfolioName, 
-        papers: [],
-      });
-  
-      console.log("Başarılı:", response.data);
-      setPortfolios((prevPortfolios) => [...prevPortfolios, response.data]);
-      setPortfolioName('');
-      toggleModal();
-      
-      
+      const response = await axios.get('http://127.0.0.1:8000/wallet/portfolios/');
+      setPortfolios(response.data);
     } catch (error) {
-      console.error("Hata:", error.response?.data || error.message);
+      console.error('Error fetching portfolios:', error);
     }
   };
 
-  const selectPortfolio = (portfolio) => {
-    setCurrentPortfolio(portfolio);
+  const fetchPapers = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/wallet/papers/');
+      setPapers(response.data);
+    } catch (error) {
+      console.error('Error fetching papers:', error);
+    }
   };
 
-  const handlePaperDataChange = (e) => {
-    const { name, value } = e.target;
-    setPaperData({ ...paperData, [name]: value });
+  const toggleModal = () => setShowModal(!showModal);
+  const toggleAddPaperModal = () => setShowAddPaperModal(!showAddPaperModal);
+  const toggleTransactionsModal = () => setShowTransactionsModal(!showTransactionsModal);
+
+  const createPortfolio = async () => {
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/wallet/create-portfolio/', {
+        name: portfolioName,
+        papers: [],
+      });
+      setPortfolios((prev) => [...prev, response.data]);
+      setPortfolioName('');
+      toggleModal();
+    } catch (error) {
+      console.error('Error creating portfolio:', error.response?.data || error.message);
+    }
+  };
+
+  const deletePortfolio = async (portfolioId) => {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/wallet/delete-portfolio/${portfolioId}/`);
+      setPortfolios(portfolios.filter((p) => p.portfolio_id !== portfolioId));
+      setCurrentPortfolio(null);
+    } catch (error) {
+      console.error('Error deleting portfolio:', error.response?.data || error.message);
+    }
   };
 
   const addPaperToPortfolio = async () => {
     if (!currentPortfolio) return;
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/add-paper/", {
+      const response = await axios.post('http://127.0.0.1:8000/wallet/add-paper/', {
         portfolio_id: currentPortfolio.portfolio_id,
         paper_name: selectedPaperName,
-        ...paperData,
       });
 
-      console.log("Hisse başarıyla eklendi:", response.data);
+      setCurrentPortfolio((prev) => ({
+        ...prev,
+        papers_list: [...(prev.papers_list || []), response.data],
+      }));
 
       setPortfolios((prevPortfolios) =>
         prevPortfolios.map((portfolio) =>
@@ -117,140 +91,204 @@ const Wallet = () => {
         )
       );
 
-    
-      // Portföy güncellemesi (React state)
-      setCurrentPortfolio((prevPortfolio) => ({
-        ...prevPortfolio,
-        papers_list: [...(prevPortfolio.papers_list || []), response.data]
-      }));
-
-      
-
-      setPaperData({ paper_name: selectedPaperName});
+      setSelectedPaperName('');
       toggleAddPaperModal();
     } catch (error) {
-      console.error("Hata:", error.response?.data || error.message);
+      console.error('Error adding paper:', error.response?.data || error.message);
+    }
+  };
+
+  const deletePaperFromPortfolio = async (portfolioId, paperId) => {
+    try {
+      await axios.delete(`http://127.0.0.1:8000/wallet/delete-paper/${portfolioId}/${paperId}/`);
+      setCurrentPortfolio((prev) => ({
+        ...prev,
+        papers_list: prev.papers_list.filter((p) => p.paper_id !== paperId),
+      }));
+    } catch (error) {
+      console.error('Error deleting paper:', error.response?.data || error.message);
+    }
+  };
+
+  const selectPortfolio = (portfolio) => {
+    setCurrentPortfolio(portfolio);
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (value) {
+      const filtered = papers.filter((paper) =>
+        paper.symbol.toLowerCase().includes(value.toLowerCase()) ||
+        paper.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredPapers(filtered);
+    } else {
+      setFilteredPapers([]);
+    }
+  };
+
+  const handlePaperSelect = (paperName) => {
+    setSelectedPaperName(paperName);
+    setSearchQuery(paperName);
+    setFilteredPapers([]);
+  };
+
+  const viewTransactions = async (paperId) => {
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/wallet/transactions/${paperId}/`);
+      setTransactions(response.data);
+      toggleTransactionsModal();
+    } catch (error) {
+      console.error('Error fetching transactions:', error.response?.data || error.message);
     }
   };
 
   return (
-    <div>
-      <h1>Wallet PAGE</h1>
-      <div>
-          <button className='btn btn-primary' onClick={toggleModal}>Create Portfolio</button>
+    <div className="container">
+      <h1 className="mt-4">Wallet Page</h1>
+
+      <div className="mb-4">
+        <button className="btn btn-primary" onClick={toggleModal}>Create Portfolio</button>
       </div>
 
-      <div className='mui-container portfolios-left-div'>
+      {/* Portföy Listesi */}
+      <div className="row">
         {portfolios.length > 0 ? (
-          portfolios.map((portfolio, index) => (
-            <div>
-              <button key={index} className="btn btn-secondary m-2"  onClick={() => selectPortfolio(portfolio)}>             
-                  <h5 className="card-title">{portfolio.name}</h5>               
-              </button>
+          portfolios.map((portfolio) => (
+            <div key={portfolio.portfolio_id} className="col-md-4 mb-3">
+              <div className="card">
+                <div className="card-body">
+                  <h5 className="card-title">{portfolio.name}</h5>
+                  <button className="btn btn-success btn-sm me-2" onClick={() => selectPortfolio(portfolio)}>Select</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => deletePortfolio(portfolio.portfolio_id)}>Delete</button>
+                </div>
+              </div>
             </div>
-            
           ))
         ) : (
-          <p>Henüz bir portföy oluşturulmadı.</p>
+          <p>No portfolios available.</p>
         )}
       </div>
 
-      {/* Seçilen Portföy Detayları */}
-      <div className='bootstrap-container portfolio-div'>
-        {currentPortfolio ? (
-          <div className="card">
-            <div className="card-body">
-              <h5 className="card-title">Portföy: {currentPortfolio.name}</h5>
-              <h6 className="card-subtitle mb-2 text-muted">Papers:</h6>
-              {currentPortfolio.papers_list && currentPortfolio.papers_list.length > 0 ? (
-                <ul>
-                  {currentPortfolio.papers_list.map((paper, idx) => (
-                    <li key={idx}>
-                    {paper.name} (İsim: {paper.name})
-                      {/* Burada buton olacak, butona basılınca ilgili fonksiyon yeni bir sayfa açıcak, açtığı sayfa ilgili paper'ın transaction'larını gösterecek */}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Bu portföyde henüz bir hisse yok.</p>
-              )}
-              <button
-                className="btn btn-success mt-3"
-                onClick={toggleAddPaperModal}
-              >
-                Add Paper
-              </button>
-            </div>
+      {/* Seçilen Portföy */}
+      {currentPortfolio && (
+        <div className="card mt-4">
+          <div className="card-body">
+            <h4>Selected Portfolio: {currentPortfolio.name}</h4>
+            <h6 className="text-muted">Papers:</h6>
+
+            {currentPortfolio.papers_list && currentPortfolio.papers_list.length > 0 ? (
+              <ul className="list-group">
+                {currentPortfolio.papers_list.map((paper) => (
+                  <li key={paper.paper_id} className="list-group-item d-flex justify-content-between align-items-center">
+                    {paper.name}
+                    <div>
+                      <button className="btn btn-info btn-sm me-2" onClick={() => viewTransactions(paper.paper_id)}>Transactions</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deletePaperFromPortfolio(currentPortfolio.portfolio_id, paper.paper_id)}>Delete</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No papers in this portfolio yet.</p>
+            )}
+
+            <button className="btn btn-primary mt-3" onClick={toggleAddPaperModal}>Add Paper</button>
           </div>
-        ) : (
-          <p>Bir portföy seçmek için düğmeye tıklayın.</p>
-        )}
-      </div>
+        </div>
+      )}
 
-
-       {/* Modal */}
-       {showModal && (
+      {/* Modal: Create Portfolio */}
+      {showModal && (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Yeni Portföy Oluştur</h5>
-                <button type="button" className="btn-close" onClick={toggleModal}></button>
+                <h5 className="modal-title">Create Portfolio</h5>
+                <button className="btn-close" onClick={toggleModal}></button>
               </div>
               <div className="modal-body">
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Portföy İsmi"
+                  placeholder="Portfolio Name"
                   value={portfolioName}
                   onChange={(e) => setPortfolioName(e.target.value)}
                 />
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={toggleModal}>İptal</button>
-                <button type="button" className="btn btn-primary" onClick={createPortfolio}>Kaydet</button>
+                <button className="btn btn-secondary" onClick={toggleModal}>Cancel</button>
+                <button className="btn btn-primary" onClick={createPortfolio}>Save</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal: Add Paper */}
       {showAddPaperModal && (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Hisse Ekle</h5>
-                <button type="button" className="btn-close" onClick={toggleAddPaperModal}></button>
+                <h5 className="modal-title">Add Paper</h5>
+                <button className="btn-close" onClick={toggleAddPaperModal}></button>
               </div>
               <div className="modal-body">
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Paper Ara"
+                  placeholder="Search Paper"
                   value={searchQuery}
                   onChange={handleSearchChange}
                 />
-
                 {filteredPapers.length > 0 && (
                   <ul className="list-group mt-2">
                     {filteredPapers.map((paper) => (
                       <li
                         key={paper.paper_id}
                         className="list-group-item"
-                        onClick={() => handlePaperSelect(paper.name)}
                         style={{ cursor: 'pointer' }}
+                        onClick={() => handlePaperSelect(paper.name)}
                       >
-                        <span>{paper.name}({paper.symbol})</span>
+                        {paper.name} ({paper.symbol})
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
-
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={toggleAddPaperModal}>İptal</button>
-                <button type="button" className="btn btn-primary" onClick={addPaperToPortfolio}>Kaydet</button>
+                <button className="btn btn-secondary" onClick={toggleAddPaperModal}>Cancel</button>
+                <button className="btn btn-primary" onClick={addPaperToPortfolio}>Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: View Transactions */}
+      {showTransactionsModal && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Transactions</h5>
+                <button className="btn-close" onClick={toggleTransactionsModal}></button>
+              </div>
+              <div className="modal-body">
+                {transactions.length > 0 ? (
+                  <ul className="list-group">
+                    {transactions.map((tx) => (
+                      <li key={tx.transaction_id} className="list-group-item">
+                        {tx.date} - {tx.type} - {tx.amount} shares at ${tx.price}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No transactions found.</p>
+                )}
               </div>
             </div>
           </div>
@@ -258,10 +296,7 @@ const Wallet = () => {
       )}
 
     </div>
-    
+  );
+};
 
-    
-  )
-}
-
-export default Wallet
+export default Wallet;
