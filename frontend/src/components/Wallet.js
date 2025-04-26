@@ -189,28 +189,49 @@ const Wallet = () => {
 
       {/* Seçilen Portföy */}
       {currentPortfolio && (
-        <div className="card mt-4">
-          <div className="card-body">
-            <h4>Selected Portfolio: {currentPortfolio.name}</h4>
-            <h6 className="text-muted">Papers:</h6>
+              <div className="card mt-4">
+                <div className="card-body">
+                  <h4>Selected Portfolio: {currentPortfolio.name}</h4>
+                  <h6 className="text-muted">Papers:</h6>
 
-            {portfolioPapers.length > 0 ?(
-              <ul className="list-group mb-3">
-                {portfolioPapers
-                .filter(portfolioPapers => portfolioPapers.portfolio_id === currentPortfolio.portfolio_id)
+                  {portfolioPapers.length > 0 ? (
+        <div className="table-responsive mb-3">
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Name (Symbol)</th>
+                <th>Total Quantity</th>
+                <th>Current Price</th>
+                <th>Average Buy Price</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {portfolioPapers
+                .filter((portfolioPaper) => portfolioPaper.portfolio_id === currentPortfolio.portfolio_id)
                 .map((paper) => (
-                  <li key={paper.paper_id} className="list-group-item d-flex justify-content-between align-items-center">
-                    {paper.name}
-                    <div>
-                      <button className="btn btn-info btn-sm me-2" onClick={() => viewTransactions(paper.paper_id)}>Transactions</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => deletePaperFromPortfolio(currentPortfolio.portfolio_id, paper.paper_id)}>Delete</button>
-                    </div>
-                  </li>
+                  <tr key={paper.paper_id}>
+                    <td>{paper.name} ({paper.symbol})</td>
+                    <td>{paper.total_quantity}</td>
+                    <td>{paper.current_price}</td>
+                    <td>{paper.average_buy_price}</td>
+                    <td>
+                      <button className="btn btn-info btn-sm me-2" onClick={() => viewTransactions(paper.paper_id)}>
+                        Transactions
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deletePaperFromPortfolio(currentPortfolio.portfolio_id, paper.paper_id)}>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            ) : (
-              <p>There is no papers on portfolio</p>
-            )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p>There are no papers in the portfolio</p>
+      )}
+
 
             
 
