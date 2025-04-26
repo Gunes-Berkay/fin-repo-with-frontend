@@ -215,19 +215,25 @@ def update_paper_prices(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def portfolio_paper_list(request):
-    portfolio_name = request.GET.get('portfolio_name')
-    portfolio = get_object_or_404(Portfolio, name=portfolio_name)
-    portfolio_papers = portfolio.papers.all()
+    
+    portfolio_papers = PortfolioPaper.objects.all()
 
     data = []
-    for paper in portfolio_papers:
+    for portfolio_paper in portfolio_papers:
+        paper = portfolio_paper.paper
+        portfolio = portfolio_paper.portfolio
         data.append({
+            "portfolio_id": portfolio.portfolio_id,
             "id": paper.id,
             "name": paper.name,
-            "symbol": paper.symbol
+            "symbol": paper.symbol,
+            "total_quantity": portfolio_paper.total_quantity,
+            "current_price": portfolio_paper.current_price,
+            "average_buy_price": portfolio_paper.average_buy_price,
         })
 
     return JsonResponse(data, safe=False, status=200)
+
 
 
 @csrf_exempt
@@ -255,3 +261,5 @@ def delete_portfolio(request, portfolio_id):
             return HttpResponseNotFound('Portfolio not found.')
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+    
+

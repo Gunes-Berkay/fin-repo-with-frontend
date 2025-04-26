@@ -13,6 +13,11 @@ const Wallet = () => {
   const [filteredPapers, setFilteredPapers] = useState([]);
   const [selectedPaperName, setSelectedPaperName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [portfolioPapers, setPortfolioPapers] = useState([]);
+  const [transactionHistory, setTransactionHistory] = useState([]);
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+
+  
 
   // Yeni State
   const [transactions, setTransactions] = useState([]);
@@ -21,6 +26,7 @@ const Wallet = () => {
   useEffect(() => {
     fetchPortfolios();
     fetchPapers();
+    fetchPortfolioPapers()
   }, []);
 
   const fetchPortfolios = async () => {
@@ -29,6 +35,15 @@ const Wallet = () => {
       setPortfolios(response.data);
     } catch (error) {
       console.error('Error fetching portfolios:', error);
+    }
+  };
+
+  const fetchPortfolioPapers = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/wallet/portfolio-papers/');
+      setPortfolioPapers(response.data);
+    } catch (error) {
+      console.error('Error fetching portfolio-papers:', error);
     }
   };
 
@@ -69,7 +84,7 @@ const Wallet = () => {
     }
   };
 
-  const addPaperToPortfolio = async () => {
+  const addPaperToPortfolio = async (paperName) => {
     if (!currentPortfolio) return;
 
     try {
@@ -86,7 +101,7 @@ const Wallet = () => {
       setPortfolios((prevPortfolios) =>
         prevPortfolios.map((portfolio) =>
           portfolio.portfolio_id === currentPortfolio.portfolio_id
-            ? { ...portfolio, papers_list: [...portfolio.papers_list, response.data] }
+            ? { ...portfolio, papers_list: [...(portfolio.papers_list || []), selectedPaperName] }
             : portfolio
         )
       );
@@ -179,9 +194,11 @@ const Wallet = () => {
             <h4>Selected Portfolio: {currentPortfolio.name}</h4>
             <h6 className="text-muted">Papers:</h6>
 
-            {currentPortfolio.papers_list && currentPortfolio.papers_list.length > 0 ? (
-              <ul className="list-group">
-                {currentPortfolio.papers_list.map((paper) => (
+            {portfolioPapers.length > 0 ?(
+              <ul className="list-group mb-3">
+                {portfolioPapers
+                .filter(portfolioPapers => portfolioPapers.portfolio_id === currentPortfolio.portfolio_id)
+                .map((paper) => (
                   <li key={paper.paper_id} className="list-group-item d-flex justify-content-between align-items-center">
                     {paper.name}
                     <div>
@@ -192,8 +209,10 @@ const Wallet = () => {
                 ))}
               </ul>
             ) : (
-              <p>No papers in this portfolio yet.</p>
+              <p>There is no papers on portfolio</p>
             )}
+
+            
 
             <button className="btn btn-primary mt-3" onClick={toggleAddPaperModal}>Add Paper</button>
           </div>
