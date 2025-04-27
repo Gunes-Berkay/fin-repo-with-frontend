@@ -13,5 +13,8 @@ urlpatterns = [
     path('wallet/portfolio-papers/', views.portfolio_paper_list, name='portfolio_paper_list'),
     path('wallet/get-papers/', views.get_papers, name='get_papers'),
     path('wallet/delete-portfolio/<int:portfolio_id>/', views.delete_portfolio, name='delete-portfolio'),
+    path('wallet/delete-portfolio-paper/<int:portfolio_paper_id>/', views.delete_portfolio_paper, name='delete-portfolio-paper'),
+    path('wallet/delete-transaction/<int:transaction_id>/', views.delete_transaction, name='delete-transaction'),
+    
 
 ]

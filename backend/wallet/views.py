@@ -263,3 +263,28 @@ def delete_portfolio(request, portfolio_id):
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
     
 
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_portfolio_paper(request, portfolio_paper_id):
+    if request.method == 'DELETE':
+        try:
+            portfolioPaper = PortfolioPaper.objects.get(portfolio_paper_id=portfolio_paper_id)
+            portfolioPaper.delete()
+            return JsonResponse({'message': 'PortfolioPaper deleted successfully.'})
+        except Portfolio.DoesNotExist:
+            return HttpResponseNotFound('PortfolioPaper not found.')
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+    
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_transaction(request, transaction_id):
+    if request.method == 'DELETE':
+        try:
+            transaction = Transactions.objects.get(transaction_id=transaction_id)
+            transaction.delete()
+            return JsonResponse({'message': 'transaction deleted successfully.'})
+        except Portfolio.DoesNotExist:
+            return HttpResponseNotFound('transaction not found.')
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=400)
