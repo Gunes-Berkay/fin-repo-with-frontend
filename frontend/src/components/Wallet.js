@@ -51,7 +51,7 @@ const Wallet = () => {
 
   const fetchTransactions = async (paperName, portfolioName) => {
     try {
-      const response = await axios.get(`/wallet/transactions/`, {
+      const response = await axios.get(`http://127.0.0.1:8000/wallet/transactions/`, {
         params: {
           paper_name: paperName,
           portfolio_name: portfolioName
@@ -97,10 +97,22 @@ const Wallet = () => {
     }));
   };
 
-  const handleTransactionSubmit = async (e) => {
+  const handleTransactionSubmit = async (e, paperName, portfolioName) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', newTransaction);
+      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: paperName,
+          portfolio: portfolioName,
+          quantity: newTransaction.quantity,
+          entry_price: newTransaction.price,
+          buy: newTransaction.buy,
+        }),
+      });
       // Fetch updated transactions after successful submission
       fetchTransactions(newTransaction.name, newTransaction.portfolio);
       // Reset the transaction form
@@ -260,15 +272,7 @@ const Wallet = () => {
     setFilteredPapers([]);
   };
 
-  const viewTransactions = async (paperId) => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/wallet/transactions/${paperId}/`);
-      setTransactions(response.data);
-      toggleTransactionsModal();
-    } catch (error) {
-      console.error('Error fetching transactions:', error.response?.data || error.message);
-    }
-  };
+  
 
   return (
     <div className="container">
@@ -334,7 +338,6 @@ const Wallet = () => {
                             ...prev,
                             [paper.paper_id]: !prev[paper.paper_id]
                           }));
-                          viewTransactions(paper.paper_id);
                         }}
                       >
                         Transactions
@@ -352,7 +355,7 @@ const Wallet = () => {
                     <tr>
                       <td colSpan="5">
                         {/* Transaction Form */}
-                        <form onSubmit={handleTransactionSubmit}>
+                        <form onSubmit={(e) => {handleTransactionSubmit(e, paper.name, currentPortfolio.name);}}>
                           <div className="mb-2">
                             <input
                               type="number"

@@ -91,7 +91,6 @@ def paper_list(request):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
 def create_transaction(request):
     data = json.loads(request.body)
 
@@ -104,7 +103,7 @@ def create_transaction(request):
     try:
         paper = CMCInfo.objects.get(name=paper_name)
     except CMCInfo.DoesNotExist:
-        return JsonResponse({"error": "Paper not found"}, status=404)
+        return JsonResponse({"error": "Paper exactly not found"}, status=404)
 
     try:
         portfolio = Portfolio.objects.get(name=portfolio_name)
@@ -232,6 +231,7 @@ def portfolio_paper_list(request):
             "total_quantity": portfolio_paper.total_quantity,
             "current_price": portfolio_paper.current_price,
             "average_buy_price": portfolio_paper.average_buy_price,
+            "paper_id": paper.id,
         })
 
     return JsonResponse(data, safe=False, status=200)

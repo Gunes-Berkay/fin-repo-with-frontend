@@ -165,7 +165,8 @@ def send_follow_list_on_start(request):
     if not FollowList.objects.filter(list_name='Wallet'):
         default_list = FollowList.objects.create(list_name='Wallet')
         default_list.save()
-        
+    
+    default_list = FollowList.objects.get(list_name='Wallet')
     for portfolioPaper in WalletPortfolioPaper.objects.all():
         FollowingPaper.objects.get_or_create(list_name=default_list, paper_id=portfolioPaper.paper.id)
         
