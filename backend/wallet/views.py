@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseNotFound
 from django.db import transaction, connections
 import json
 import requests
-
+from charts.models import FollowingPaper
 from .models import Portfolio, PortfolioPaper, Transactions
 from charts.models import CMCInfo
 
@@ -122,6 +122,8 @@ def create_transaction(request):
         quantity=quantity,
         buy=buy
     )
+    
+    calculate_transaction_for_portfolio_paper(portfolio_paper.portfolio_paper_id)
 
     return JsonResponse({
         "transaction_id": transaction_obj.transaction_id,
@@ -144,7 +146,7 @@ def transaction_list(request):
     portfolio = get_object_or_404(Portfolio, name=portfolio_name)
     portfolio_paper = get_object_or_404(PortfolioPaper, portfolio=portfolio, paper=paper)
 
-    transactions = portfolio_paper.transactions.all()
+    transactions = get_object_or_404(Transactions, portfolio_paper=portfolio_paper)
     data = []
     for transaction_obj in transactions:
         data.append({
@@ -288,3 +290,54 @@ def delete_transaction(request, transaction_id):
             return HttpResponseNotFound('transaction not found.')
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+def calculate_transaction_for_portfolio_paper(portfolio_paper_id):
+    try:
+        portfolio_paper = PortfolioPaper.objects.get(portfolio_paper_id=portfolio_paper_id)
+    except PortfolioPaper.DoesNotExist:
+        return JsonResponse({"error": "PortfolioPaper not found"}, status=404)
+
+    transactions = Transactions.objects.filter(portfolio_paper=portfolio_paper)
+    total_buy = 0
+    avg_buy_price = 0
+    total_sell = 0
+    avg_sell_price = 0
+    for transaction in transactions.filter(buy=True):
+        total_buy += transaction.quantity
+        avg_buy_price += transaction.entry_price * transaction.quantity
+        avg_buy_price /= total_buy if total_buy != 0 else 1
+    for transaction in transactions.filter(buy=False):
+        total_sell += transaction.quantity
+        avg_sell_price += transaction.entry_price * transaction.quantity   
+        avg_sell_price /= total_sell if total_sell != 0 else 1
+        
+    portfolio_paper.average_buy_price = avg_buy_price
+    portfolio_paper.average_sell_price = avg_sell_price
+    portfolio_paper.buy_count = total_buy
+    portfolio_paper.sell_count = total_sell
+    
+    realized_pl = (avg_sell_price - avg_buy_price) * total_sell
+
+    unrealized_pl = (portfolio_paper.current_price - avg_buy_price) * (total_buy - total_sell)
+
+    total_profit_loss = realized_pl + unrealized_pl
+    portfolio_paper.total_profit_loss = total_profit_loss
+    
+        
+    portfolio_paper.total_quantity = total_buy - total_sell
+    portfolio_paper.save()
+ 
+def update_portfolio_paper_price(request):
+    try:
+        portfolio_papers = PortfolioPaper.objects.all()
+    except PortfolioPaper.DoesNotExist:
+        return JsonResponse({"error": "PortfolioPapers not found"}, status=404)
+    
+    for portfolio_paper in portfolio_papers:
+        paper = portfolio_paper.paper
+        followingPaper = FollowingPaper.objects.filter(paper=paper).first()
+        if followingPaper:
+            portfolio_paper.current_price = followingPaper.price
+        portfolio_paper.save()
+        
+    return JsonResponse({"message": "PortfolioPaper prices updated successfully"}, status=200)

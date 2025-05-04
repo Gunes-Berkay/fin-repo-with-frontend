@@ -2,7 +2,7 @@
 from django.http import JsonResponse
 from django.db import connections
 from django.http import JsonResponse
-
+from wallet.models import PortfolioPaper as WalletPortfolioPaper
 import sqlite3
 import requests
 import os
@@ -162,12 +162,15 @@ def remove_paper_from_follow_list(request):
     return JsonResponse({'message': 'Coin removed from follow list successfully'}, status=200)
 
 def send_follow_list_on_start(request):
-    if not FollowList.objects.exists():
-        default_list = FollowList.objects.create(list_name='Default')
-        from .models import PortfolioPaper  # Eğer varsa
-
-        for paper in PortfolioPaper.objects.all():
-            FollowingPaper.objects.create(list_name=default_list, paper_id=paper.paper_id)
+    if not FollowList.objects.filter(list_name='Wallet'):
+        default_list = FollowList.objects.create(list_name='Wallet')
+        default_list.save()
+        
+    for portfolioPaper in WalletPortfolioPaper.objects.all():
+        FollowingPaper.objects.get_or_create(list_name=default_list, paper_id=portfolioPaper.paper.id)
+        
+            
+    update_following_papers(request) 
 
     return return_follow_list(request)
 

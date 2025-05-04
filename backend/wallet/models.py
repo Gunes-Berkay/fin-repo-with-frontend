@@ -25,6 +25,12 @@ class PortfolioPaper(models.Model):
     total_quantity = models.IntegerField(default=0)  
     current_price = models.FloatField(default=100.0)  
     average_buy_price = models.FloatField(default=0.0)
+    average_sell_price = models.FloatField(default=0.0)
+    buy_count = models.IntegerField(default=0)
+    sell_count = models.IntegerField(default=0)
+    total_profit_loss = models.FloatField(default=0.0)
+    realized_profit_loss = models.FloatField(default=0.0)
+    unrealized_profit_loss = models.FloatField(default=0.0)
 
     def __str__(self):
         return f"{self.portfolio.name} - {self.paper.name} (Qty: {self.total_quantity})"
