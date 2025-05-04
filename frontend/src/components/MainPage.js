@@ -43,6 +43,7 @@ const MainPage = () => {
   useEffect(() => {
     fetchStartWatchList(); 
     fetchPaperNames();
+    updateFollowingPaper();
   }, [])
 
   const handleIconClick = (type) => {   
@@ -50,7 +51,6 @@ const MainPage = () => {
     setShowPaperNews(type === 'paper');
     setShowWatchlist(type === 'watchlist');
     setShowResearch(type === 'research');
-    updateFollowingPaper();
   };
 
   const fetchStartWatchList = async () => {

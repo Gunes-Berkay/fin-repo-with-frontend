@@ -14,25 +14,135 @@ const Wallet = () => {
   const [selectedPaperName, setSelectedPaperName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [portfolioPapers, setPortfolioPapers] = useState([]);
-  const [transactionHistory, setTransactionHistory] = useState([]);
-  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [showTransactionsModal, setShowTransactionsModal] = useState(false);
+  const [showTransactionForm, setShowTransactionForm] = useState({});
+
+
+  const [selectedPaper, setSelectedPaper] = useState('');
+  const [selectedPortfolio, setSelectedPortfolio] = useState('');
+
+  const [newTransaction, setNewTransaction] = useState({
+    name: '',
+    portfolio: '',
+    entry_price: '',
+    quantity: '',
+    buy: true
+  });
 
   
 
   // Yeni State
-  const [transactions, setTransactions] = useState([]);
-  const [showTransactionsModal, setShowTransactionsModal] = useState(false);
 
   useEffect(() => {
+    fetchStartWatchList();
+    updateFollowingPaper();
+    updatePortfolioPaperPrice();
     fetchPortfolios();
     fetchPapers();
-    fetchPortfolioPapers()
+    fetchPortfolioPapers();
   }, []);
 
+  useEffect(() => {
+    if (selectedPaper && selectedPortfolio) {
+      fetchTransactions(selectedPaper, selectedPortfolio);
+    }
+  }, [selectedPaper, selectedPortfolio]);
+
+  const fetchTransactions = async (paperName, portfolioName) => {
+    try {
+      const response = await axios.get(`/wallet/transactions/`, {
+        params: {
+          paper_name: paperName,
+          portfolio_name: portfolioName
+        }
+      });
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Transaction listesi alınamadı:', error);
+    }
+  };
+
+  const handleNewTransactionChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNewTransaction(prevState => ({
+      ...prevState,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const submitTransaction = async () => {
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', newTransaction);
+      // Başarılı olursa listeyi tekrar al
+      fetchTransactions(newTransaction.name, newTransaction.portfolio);
+      // Formu sıfırla
+      setNewTransaction({
+        name: '',
+        portfolio: '',
+        entry_price: '',
+        quantity: '',
+        buy: true
+      });
+    } catch (error) {
+      console.error('İşlem oluşturulamadı:', error);
+    }
+  };
+
+  const handleTransactionChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNewTransaction((prevState) => ({
+      ...prevState,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleTransactionSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', newTransaction);
+      // Fetch updated transactions after successful submission
+      fetchTransactions(newTransaction.name, newTransaction.portfolio);
+      // Reset the transaction form
+      setNewTransaction({
+        name: '',
+        portfolio: '',
+        entry_price: '',
+        quantity: '',
+        buy: true,
+      });
+      console.log('Transaction created successfully:', response.data);
+    } catch (error) {
+      console.error('Error creating transaction:', error.response?.data || error.message);
+    }
+  };
+
+  const updateFollowingPaper = async () => {
+    const response = await fetch('http://127.0.0.1:8000/update-following-paper/', {
+      method: 'POST',
+    });
+    if (response.ok) {
+      console.log('Prices updated');
+    } else {
+      console.error('Failed to update prices');
+    }
+  }
+  const fetchStartWatchList = async () => {
+    const response = await fetch('http://127.0.0.1:8000/charts/'); 
+    const data = await response.json(); 
+  }
   const fetchPortfolios = async () => {
     try {
       const response = await axios.get('http://127.0.0.1:8000/wallet/portfolios/');
       setPortfolios(response.data);
+    } catch (error) {
+      console.error('Error fetching portfolios:', error);
+    }
+  };
+
+  const updatePortfolioPaperPrice = async () => {
+    try {
+      await axios.get('http://127.0.0.1:8000/wallet/update-portfolio-paper-price/');
     } catch (error) {
       console.error('Error fetching portfolios:', error);
     }
@@ -207,24 +317,98 @@ const Wallet = () => {
               </tr>
             </thead>
             <tbody>
-              {portfolioPapers
-                .filter((portfolioPaper) => portfolioPaper.portfolio_id === currentPortfolio.portfolio_id)
-                .map((paper) => (
-                  <tr key={paper.paper_id}>
+            {portfolioPapers
+              .filter((portfolioPaper) => portfolioPaper.portfolio_id === currentPortfolio.portfolio_id)
+              .map((paper) => (
+                <React.Fragment key={paper.paper_id}>
+                  <tr>
                     <td>{paper.name} ({paper.symbol})</td>
                     <td>{paper.total_quantity}</td>
                     <td>{paper.current_price}</td>
                     <td>{paper.average_buy_price}</td>
                     <td>
-                      <button className="btn btn-info btn-sm me-2" onClick={() => viewTransactions(paper.paper_id)}>
+                      <button
+                        className="btn btn-info btn-sm me-2"
+                        onClick={() => {
+                          setShowTransactionForm(prev => ({
+                            ...prev,
+                            [paper.paper_id]: !prev[paper.paper_id]
+                          }));
+                          viewTransactions(paper.paper_id);
+                        }}
+                      >
                         Transactions
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => deletePaperFromPortfolio(currentPortfolio.portfolio_id, paper.paper_id)}>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => deletePaperFromPortfolio(currentPortfolio.portfolio_id, paper.paper_id)}
+                      >
                         Delete
                       </button>
                     </td>
                   </tr>
-                ))}
+
+                  {showTransactionForm[paper.paper_id] && (
+                    <tr>
+                      <td colSpan="5">
+                        {/* Transaction Form */}
+                        <form onSubmit={handleTransactionSubmit}>
+                          <div className="mb-2">
+                            <input
+                              type="number"
+                              name="quantity"
+                              placeholder="Quantity"
+                              value={newTransaction.quantity || ''}
+                              onChange={handleTransactionChange}
+                              className="form-control"
+                              required
+                            />
+                          </div>
+                          <div className="mb-2">
+                            <input
+                              type="number"
+                              name="price"
+                              placeholder="Price"
+                              value={newTransaction.price || ''}
+                              onChange={handleTransactionChange}
+                              className="form-control"
+                              required
+                            />
+                          </div>
+                          <div className="mb-2">
+                            <label>
+                              <input
+                                type="checkbox"
+                                name="buy"
+                                checked={newTransaction.buy || false}
+                                onChange={handleTransactionChange}
+                              /> Buy
+                            </label>
+                          </div>
+                          <button className="btn btn-success btn-sm" type="submit">Submit Transaction</button>
+                        </form>
+
+                        {/* Transaction List */}
+                        <div className="mt-3">
+                          <h6>Transactions</h6>
+                          {transactions[paper.paper_id] ? (
+                            <ul className="list-group">
+                              {transactions[paper.paper_id].map(txn => (
+                                <li key={txn.id} className="list-group-item">
+                                  {txn.buy ? 'Buy' : 'Sell'} - {txn.quantity} @ {txn.price}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No transactions found.</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+            ))}
+
             </tbody>
           </table>
         </div>
