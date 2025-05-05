@@ -39,7 +39,7 @@ class Transactions(models.Model):
     transaction_id = models.AutoField(primary_key=True)
     portfolio_paper = models.ForeignKey(PortfolioPaper, on_delete=models.CASCADE, related_name='transactions')
     entry_price = models.FloatField()
-    quantity = models.IntegerField() 
+    quantity = models.FloatField() 
     entry_date = models.DateTimeField(auto_now_add=True)
     buy = models.BooleanField()  
 

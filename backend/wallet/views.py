@@ -91,6 +91,7 @@ def paper_list(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def create_transaction(request):
     data = json.loads(request.body)
 
@@ -145,7 +146,8 @@ def transaction_list(request):
     portfolio = get_object_or_404(Portfolio, name=portfolio_name)
     portfolio_paper = get_object_or_404(PortfolioPaper, portfolio=portfolio, paper=paper)
 
-    transactions = get_object_or_404(Transactions, portfolio_paper=portfolio_paper)
+    transactions = Transactions.objects.filter(portfolio_paper=portfolio_paper).order_by('-entry_date')
+
     data = []
     for transaction_obj in transactions:
         data.append({
@@ -157,6 +159,7 @@ def transaction_list(request):
         })
 
     return JsonResponse(data, safe=False, status=200)
+
 
 
 @csrf_exempt
@@ -267,10 +270,10 @@ def delete_portfolio(request, portfolio_id):
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
-def delete_portfolio_paper(request, portfolio_paper_id):
+def delete_portfolio_paper(request, portfolio_id, paper_id):
     if request.method == 'DELETE':
         try:
-            portfolioPaper = PortfolioPaper.objects.get(portfolio_paper_id=portfolio_paper_id)
+            portfolioPaper = PortfolioPaper.objects.get(paper=paper_id, portfolio=portfolio_id)
             portfolioPaper.delete()
             return JsonResponse({'message': 'PortfolioPaper deleted successfully.'})
         except Portfolio.DoesNotExist:

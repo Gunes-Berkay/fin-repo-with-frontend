@@ -19,8 +19,7 @@ const Wallet = () => {
   const [showTransactionForm, setShowTransactionForm] = useState({});
 
 
-  const [selectedPaper, setSelectedPaper] = useState('');
-  const [selectedPortfolio, setSelectedPortfolio] = useState('');
+  
 
   const [newTransaction, setNewTransaction] = useState({
     name: '',
@@ -35,22 +34,23 @@ const Wallet = () => {
   // Yeni State
 
   useEffect(() => {
-    fetchStartWatchList();
-    updateFollowingPaper();
-    updatePortfolioPaperPrice();
+    //fetchStartWatchList();
+    //updateFollowingPaper();
+    //updatePortfolioPaperPrice();
     fetchPortfolios();
     fetchPapers();
     fetchPortfolioPapers();
   }, []);
 
   useEffect(() => {
-    if (selectedPaper && selectedPortfolio) {
-      fetchTransactions(selectedPaper, selectedPortfolio);
+    if (selectedPaperName && portfolioName) {
+      fetchTransactions(selectedPaperName, portfolioName);
     }
-  }, [selectedPaper, selectedPortfolio]);
+  }, [selectedPaperName, portfolioName]);
 
   const fetchTransactions = async (paperName, portfolioName) => {
     try {
+      console.log('Fetching transactions for:', paperName, portfolioName);
       const response = await axios.get(`http://127.0.0.1:8000/wallet/transactions/`, {
         params: {
           paper_name: paperName,
@@ -71,23 +71,7 @@ const Wallet = () => {
     }));
   };
 
-  const submitTransaction = async () => {
-    try {
-      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', newTransaction);
-      // Başarılı olursa listeyi tekrar al
-      fetchTransactions(newTransaction.name, newTransaction.portfolio);
-      // Formu sıfırla
-      setNewTransaction({
-        name: '',
-        portfolio: '',
-        entry_price: '',
-        quantity: '',
-        buy: true
-      });
-    } catch (error) {
-      console.error('İşlem oluşturulamadı:', error);
-    }
-  };
+  
 
   const handleTransactionChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -100,21 +84,16 @@ const Wallet = () => {
   const handleTransactionSubmit = async (e, paperName, portfolioName) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transaction/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: paperName,
-          portfolio: portfolioName,
-          quantity: newTransaction.quantity,
-          entry_price: newTransaction.price,
-          buy: newTransaction.buy,
-        }),
+      const response = await axios.post('http://127.0.0.1:8000/wallet/create-transactio/', {
+        name: paperName,
+        portfolio: portfolioName,
+        quantity: newTransaction.quantity,
+        entry_price: newTransaction.price,
+        buy: newTransaction.buy,
       });
+      
       // Fetch updated transactions after successful submission
-      fetchTransactions(newTransaction.name, newTransaction.portfolio);
+      fetchTransactions(paperName, portfolioName);
       // Reset the transaction form
       setNewTransaction({
         name: '',
@@ -237,7 +216,7 @@ const Wallet = () => {
 
   const deletePaperFromPortfolio = async (portfolioId, paperId) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/wallet/delete-paper/${portfolioId}/${paperId}/`);
+      await axios.delete(`http://127.0.0.1:8000/wallet/delete-portfolio-paper/${portfolioId}/${paperId}/`);
       setCurrentPortfolio((prev) => ({
         ...prev,
         papers_list: prev.papers_list.filter((p) => p.paper_id !== paperId),
@@ -394,11 +373,11 @@ const Wallet = () => {
                         {/* Transaction List */}
                         <div className="mt-3">
                           <h6>Transactions</h6>
-                          {transactions[paper.paper_id] ? (
+                          {transactions.length > 0 ? (
                             <ul className="list-group">
-                              {transactions[paper.paper_id].map(txn => (
-                                <li key={txn.id} className="list-group-item">
-                                  {txn.buy ? 'Buy' : 'Sell'} - {txn.quantity} @ {txn.price}
+                              {transactions.map(txn => (
+                                <li key={txn.transaction_id} className="list-group-item">
+                                  {txn.buy ? 'Buy' : 'Sell'} - {txn.quantity} @ ${txn.entry_price}
                                 </li>
                               ))}
                             </ul>
@@ -495,32 +474,8 @@ const Wallet = () => {
         </div>
       )}
 
-      {/* Modal: View Transactions */}
-      {showTransactionsModal && (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Transactions</h5>
-                <button className="btn-close" onClick={toggleTransactionsModal}></button>
-              </div>
-              <div className="modal-body">
-                {transactions.length > 0 ? (
-                  <ul className="list-group">
-                    {transactions.map((tx) => (
-                      <li key={tx.transaction_id} className="list-group-item">
-                        {tx.date} - {tx.type} - {tx.amount} shares at ${tx.price}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No transactions found.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
+      
 
     </div>
   );
