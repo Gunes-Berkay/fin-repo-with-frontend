@@ -123,7 +123,6 @@ def create_transaction(request):
         buy=buy
     )
     
-    calculate_transaction_for_portfolio_paper(portfolio_paper.portfolio_paper_id)
 
     return JsonResponse({
         "transaction_id": transaction_obj.transaction_id,
@@ -156,6 +155,25 @@ def transaction_list(request):
             "quantity": transaction_obj.quantity,
             "buy": transaction_obj.buy,
             "entry_date": transaction_obj.entry_date
+        })
+
+    return JsonResponse(data, safe=False, status=200)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def fetch_transactions(request):
+    transactions = Transactions.objects.all()
+
+    data = []
+    for transaction_obj in transactions:
+        data.append({
+            "transaction_id": transaction_obj.transaction_id,
+            "entry_price": transaction_obj.entry_price,
+            "quantity": transaction_obj.quantity,
+            "buy": transaction_obj.buy,
+            "entry_date": transaction_obj.entry_date,
+            "paper": transaction_obj.portfolio_paper.paper.name,
+            "portfolio": transaction_obj.portfolio_paper.portfolio.name
         })
 
     return JsonResponse(data, safe=False, status=200)
@@ -288,6 +306,7 @@ def delete_transaction(request, transaction_id):
         try:
             transaction = Transactions.objects.get(transaction_id=transaction_id)
             transaction.delete()
+            
             return JsonResponse({'message': 'transaction deleted successfully.'})
         except Portfolio.DoesNotExist:
             return HttpResponseNotFound('transaction not found.')
@@ -329,7 +348,16 @@ def calculate_transaction_for_portfolio_paper(portfolio_paper_id):
         
     portfolio_paper.total_quantity = total_buy - total_sell
     portfolio_paper.save()
- 
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def calculate_all_transactions(request):
+    portfolio_papers = PortfolioPaper.objects.all()
+    for portfolio_paper in portfolio_papers:
+        calculate_transaction_for_portfolio_paper(portfolio_paper.portfolio_paper_id)
+    
+    return JsonResponse({"message": "All transactions calculated successfully"}, status=200)
+
 def update_portfolio_paper_price(request):
     try:
         portfolio_papers = PortfolioPaper.objects.all()

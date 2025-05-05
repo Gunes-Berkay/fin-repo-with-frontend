@@ -16,4 +16,6 @@ urlpatterns = [
     path('wallet/delete-portfolio-paper/<int:portfolio_id>/<int:paper_id>/', views.delete_portfolio_paper, name='delete-portfolio-paper'),
     path('wallet/delete-transaction/<int:transaction_id>/', views.delete_transaction, name='delete-transaction'),
     path('wallet/update-portfolio-paper-price/', views.update_portfolio_paper_price, name='update-portfolio-paper-price'),
+    path('wallet/fetch-all-transactions/', views.fetch_transactions, name='fetcha-all-transactions'),
+    path('wallet/calculate-all-transactions/', views.calculate_all_transactions, name='calculate-all-transactions'),
 ]

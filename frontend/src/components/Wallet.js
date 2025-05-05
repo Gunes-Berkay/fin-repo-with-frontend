@@ -17,6 +17,7 @@ const Wallet = () => {
   const [transactions, setTransactions] = useState([]);
   const [showTransactionsModal, setShowTransactionsModal] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState({});
+  const [allTransactions, setAllTransactions] = useState([]);
 
 
   
@@ -31,15 +32,17 @@ const Wallet = () => {
 
   
 
-  // Yeni State
 
   useEffect(() => {
     //fetchStartWatchList();
     //updateFollowingPaper();
     //updatePortfolioPaperPrice();
+    calculateTransactions();
     fetchPortfolios();
     fetchPapers();
     fetchPortfolioPapers();
+    fetchAllTransactions();
+    
   }, []);
 
   useEffect(() => {
@@ -62,16 +65,35 @@ const Wallet = () => {
       console.error('Transaction listesi alınamadı:', error);
     }
   };
-
-  const handleNewTransactionChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewTransaction(prevState => ({
-      ...prevState,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const calculateTransactions = async ()=>{
+    const response = await axios.get(`http://127.0.0.1:8000/wallet/calculate-all-transactions/`);
+    if (response.status === 200) {
+      console.log('Transaction calculations updated successfully');
+    } else {
+      console.error('Failed to update transaction calculations');
+    }
+  }
+  const deleteTransaction = async (transactionId) => {
+    try {
+      await axios.delete(`http://127.0.1:8000/wallet/delete-transaction/${transactionId}/`);
+      setAllTransactions(allTransactions.filter((txn) => txn.transaction_id !== transactionId));
+      console.log('Transaction deleted successfully');
+    }
+    catch (error) {
+      console.error('Error deleting transaction:', error.response?.data || error.message);
+    }
   };
-
   
+  
+    const fetchAllTransactions = async () => {
+    try {  
+      const response = await axios.get(`http://127.0.0.1:8000/wallet/fetch-all-transactions/`);
+      setAllTransactions(response.data);
+      console.log('All transactions fetched successfully:', response.data);
+    } catch (error) {
+      console.error('Transaction listesi alınamadı:', error);
+    }
+  };
 
   const handleTransactionChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -92,9 +114,7 @@ const Wallet = () => {
         buy: newTransaction.buy,
       });
       
-      // Fetch updated transactions after successful submission
       fetchTransactions(paperName, portfolioName);
-      // Reset the transaction form
       setNewTransaction({
         name: '',
         portfolio: '',
@@ -373,13 +393,25 @@ const Wallet = () => {
                         {/* Transaction List */}
                         <div className="mt-3">
                           <h6>Transactions</h6>
-                          {transactions.length > 0 ? (
+                          {allTransactions.filter(txn =>
+                            txn.paper === paper.name && txn.portfolio === currentPortfolio.name
+                          ).length > 0 ? (
                             <ul className="list-group">
-                              {transactions.map(txn => (
-                                <li key={txn.transaction_id} className="list-group-item">
-                                  {txn.buy ? 'Buy' : 'Sell'} - {txn.quantity} @ ${txn.entry_price}
-                                </li>
-                              ))}
+                              {allTransactions
+                                .filter(txn =>
+                                  txn.paper === paper.name && txn.portfolio === currentPortfolio.name
+                                )
+                                .map(txn => (
+                                  <li key={txn.transaction_id} className="list-group-item">
+                                    {txn.buy ? 'Buy' : 'Sell'} - {txn.quantity} @ ${txn.entry_price}
+                                    <button
+                                      className="btn btn-danger btn-sm float-end"
+                                      onClick={() => deleteTransaction(txn.transaction_id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </li>
+                                ))}
                             </ul>
                           ) : (
                             <p>No transactions found.</p>
